@@ -45,10 +45,7 @@ from baybe.recommenders.pure.experimental_feasibility import (
 )
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import Surrogate, SurrogateProtocol
-from baybe.surrogates.gaussian_process.core import (
-    GaussianProcessSurrogate,
-    _ModelContext,
-)
+from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.surrogates.gaussian_process.presets.baybe import (
     KERNEL_FACTORY as BAYBE_DEFAULT_KERNEL_FACTORY,
 )
@@ -64,11 +61,19 @@ from ._columns import (
     FEASIBILITY_LABEL,
     MEASUREMENT_ID,
 )
+from ._layout import _FactorizedInputLayout
+from ._layout_fit import (
+    _fit_layout_surrogate,
+    _FitInputContext,
+    _make_model_context,
+    _validate_layout_surrogate,
+)
 from .dag import MultiStepDAG
 from .data import (
     _extract_feasibility_values,
     _get_node,
-    _make_local_searchspace,
+    _is_finite_observation,
+    _make_local_fit_context,
     _predicted_mean_rows,
     _validate_finite_input,
     _validate_node_inputs,
@@ -98,7 +103,7 @@ class _MultiStepGPClassifier(_GaussianProcessClassifier):
 
     _is_prior: bool = field(default=False, init=False)
 
-    def initialize_prior(self, searchspace: SearchSpace, objective: Objective) -> None:
+    def initialize_prior(self, context: _FitInputContext, objective: Objective) -> None:
         """Construct the unconditioned classifier without adding observations."""
         import torch
         from botorch.exceptions import InputDataWarning, UserInputWarning
@@ -106,19 +111,19 @@ class _MultiStepGPClassifier(_GaussianProcessClassifier):
         from gpytorch.likelihoods import BernoulliLikelihood
         from gpytorch.means import ZeroMean
 
-        n_features = len(searchspace.comp_rep_columns)
+        n_features = len(context.comp_rep_columns)
         if not n_features:
             raise IncompatibilityError(
                 "The feasibility classifier requires at least one computational "
                 "input feature. Check the node inputs and parent context."
             )
         measurements = pd.DataFrame(
-            columns=[*searchspace.parameter_names, FEASIBILITY_LABEL]
+            columns=[*context.parameter_names, FEASIBILITY_LABEL]
         )
-        context = _ModelContext(searchspace, objective, measurements)
-        kernel = BAYBE_DEFAULT_KERNEL_FACTORY(searchspace, objective, measurements)
+        model_context = _make_model_context(context, objective, measurements)
+        kernel = BAYBE_DEFAULT_KERNEL_FACTORY(context, objective, measurements)
         if isinstance(kernel, Kernel):
-            kernel = kernel.to_gpytorch(searchspace)
+            kernel = kernel.to_gpytorch(context)
         # Inducing locations define the approximation only; no labels are supplied
         # and prior predictions below bypass the variational distribution entirely.
         inducing = torch.zeros((1, n_features), dtype=torch.double)
@@ -131,12 +136,12 @@ class _MultiStepGPClassifier(_GaussianProcessClassifier):
                 likelihood=BernoulliLikelihood(),
                 covar_module=kernel,
                 mean_module=ZeroMean(),
-                input_transform=self._make_input_transform(context),
+                input_transform=self._make_input_transform(model_context),
             )
-        self._searchspace = searchspace
+        self._searchspace = context
         self._objective = objective
         self._measurements = measurements
-        self._input_scaler = self._make_input_scaler(searchspace)
+        self._input_scaler = self._make_input_scaler(context)
         self._output_scaler = self._make_output_scaler(objective, measurements)
         self._model = model
         self._is_prior = True
@@ -183,7 +188,8 @@ class _MultiStepGPClassifier(_GaussianProcessClassifier):
         assert self._objective is not None
         assert self._measurements is not None
 
-        context = _ModelContext(self._searchspace, self._objective, self._measurements)
+        fit_context = self._searchspace
+        context = _make_model_context(fit_context, self._objective, self._measurements)
         kernel = BAYBE_DEFAULT_KERNEL_FACTORY(
             context.searchspace, context.objective, context.measurements
         )
@@ -201,7 +207,7 @@ class _MultiStepGPClassifier(_GaussianProcessClassifier):
                 mean_module=ZeroMean(),
                 input_transform=(
                     self._make_input_transform(context)
-                    if self._searchspace.comp_rep_columns
+                    if fit_context.comp_rep_columns
                     else None
                 ),
             )
@@ -233,22 +239,34 @@ class _MultiStepGPClassifier(_GaussianProcessClassifier):
         return super().posterior_probabilities(candidates_comp)
 
 
+def _conditioned_output_names(node: MultiStepNode) -> tuple[str, ...]:
+    """Return the node outputs that a feasibility condition restricts."""
+    return tuple(
+        output_name
+        for output_name in node.output_names
+        if any(
+            condition.column == output_name for condition in node.feasibility_conditions
+        )
+    )
+
+
 def _make_feasibility_searchspace(
     dag: MultiStepDAG,
     node: MultiStepNode,
     inputs: pd.DataFrame,
-) -> tuple[SearchSpace, dict[str, str]]:
+) -> tuple[_FitInputContext, dict[str, str]]:
     """Create a local feature space and names for numeric-output probabilities."""
-    from baybe.multistep.data import _make_local_searchspace
+    from baybe.multistep.data import _make_local_fit_context
     from baybe.parameters.numerical import NumericalContinuousParameter
 
     input_names = dag.context.input_names(node)
-    base = _make_local_searchspace(dag.context, node, inputs[list(input_names)])
-    conditions_by_output = {
-        name
-        for name in node.output_names
-        if any(condition.column == name for condition in node.feasibility_conditions)
-    }
+    base = _make_local_fit_context(
+        dag.context,
+        node,
+        inputs[list(input_names)],
+        product_free=dag.product_free,
+    )
+    conditions_by_output = set(_conditioned_output_names(node))
     feature_names: dict[str, str] = {}
     used_names = (
         {parameter.name for parameter in dag.parameter_by_name.values()}
@@ -276,9 +294,13 @@ def _make_feasibility_searchspace(
         probability_parameters.append(
             NumericalContinuousParameter(candidate, bounds=(0.0, 1.0))
         )
-    return SearchSpace.from_product([*base.parameters, *probability_parameters]), (
-        feature_names
+    parameters = [*base.parameters, *probability_parameters]
+    context: _FitInputContext = (
+        _FactorizedInputLayout.from_parameters(parameters)
+        if dag.product_free
+        else SearchSpace.from_product(parameters)
     )
+    return context, feature_names
 
 
 def _make_grouped_folds(frame: pd.DataFrame) -> tuple[tuple[list[int], list[int]], ...]:
@@ -330,8 +352,20 @@ def _interval_probability(
     node: MultiStepNode,
     output_name: str,
     posterior: Any,
+    *,
+    posterior_index: int | None = None,
 ) -> Tensor:
-    """Compute one output's posterior mass inside its joint feasibility interval."""
+    """Compute one output's posterior mass inside its joint feasibility interval.
+
+    Args:
+        node: The node defining the feasibility conditions.
+        output_name: The output whose interval mass is computed.
+        posterior: The posterior to evaluate.
+        posterior_index: The output position in ``posterior``. Defaults to the
+            output's position in the node bundle. The product-free out-of-fold path
+            fits one independent single-output posterior per output and passes ``0``
+            so that the posterior is not indexed with the bundle position.
+    """
     conditions = tuple(
         condition
         for condition in node.feasibility_conditions
@@ -342,7 +376,11 @@ def _interval_probability(
 
     import torch
 
-    output_index = node.output_names.index(output_name)
+    output_index = (
+        node.output_names.index(output_name)
+        if posterior_index is None
+        else posterior_index
+    )
     mean = posterior.mean[..., output_index : output_index + 1]
     standard_deviation = (
         posterior.variance[..., output_index : output_index + 1].clamp_min(0.0).sqrt()
@@ -476,7 +514,7 @@ def _make_regression_training_frames(
 
 def validate_network_measurements(
     dag: MultiStepDAG,
-    searchspace: SearchSpace,
+    searchspace: SearchSpace | None,
     objective: Objective,
     measurements: pd.DataFrame,
 ) -> None:
@@ -488,7 +526,8 @@ def validate_network_measurements(
 
     Args:
         dag: The DAG defining the expected data contract.
-        searchspace: The DAG-wide search space passed by the recommender.
+        searchspace: The DAG-wide search space passed by the recommender, or ``None``
+            on the product-free path where no search space is materialized.
         objective: The objective assembled from the final nodes.
         measurements: The measurement frame containing complete DAG runs.
 
@@ -506,7 +545,11 @@ def validate_network_measurements(
         )
 
     expected_parameters = tuple(dag.parameter_by_name)
-    actual_parameters = tuple(parameter.name for parameter in searchspace.parameters)
+    actual_parameters = (
+        tuple(parameter.name for parameter in searchspace.parameters)
+        if searchspace is not None
+        else expected_parameters
+    )
     if set(actual_parameters) != set(expected_parameters):
         raise IncompatibilityError(
             f"The search space parameters {sorted(actual_parameters)} do not match "
@@ -568,42 +611,106 @@ def _validate_network_fit_context(
     dag: MultiStepDAG,
     searchspace: SearchSpace | None,
     objective: Objective,
-) -> SearchSpace:
+) -> SearchSpace | None:
     """Validate and resolve the DAG-owned context of a stock ``fit`` call."""
-    expected = dag.full_searchspace
-    resolved = expected if searchspace is None else searchspace
-    expected_parameters = {
-        parameter.name: parameter for parameter in expected.parameters
-    }
-    supplied_parameters = {
-        parameter.name: parameter for parameter in resolved.parameters
-    }
-    discrete_names = tuple(parameter.name for parameter in expected.discrete.parameters)
-    expected_discrete = {
-        tuple(row)
-        for row in expected.discrete.exp_rep[list(discrete_names)].itertuples(
-            index=False, name=None
+    if dag.product_free:
+        resolved = searchspace
+        if resolved is not None:
+            expected_parameters = dag.parameter_by_name
+            supplied_parameters = {
+                parameter.name: parameter for parameter in resolved.parameters
+            }
+            discrete_parameters = [
+                parameter
+                for parameter in expected_parameters.values()
+                if parameter.is_discrete
+            ]
+            discrete_names = [parameter.name for parameter in discrete_parameters]
+            # The number of possible discrete combinations is known arithmetically
+            # from the active levels; no product rows are materialized.
+            expected_combinations = (
+                math.prod(
+                    len(parameter.active_values) for parameter in discrete_parameters
+                )
+                if discrete_parameters
+                else 0
+            )
+            columns = set(resolved.discrete.exp_rep.columns)
+            supplied_rows = (
+                list(
+                    resolved.discrete.exp_rep[discrete_names].itertuples(
+                        index=False, name=None
+                    )
+                )
+                if set(discrete_names) <= columns
+                else []
+            )
+            allowed_levels = {
+                parameter.name: set(parameter.active_values)
+                for parameter in discrete_parameters
+            }
+            foreign_level = any(
+                value not in allowed_levels[name]
+                for row in supplied_rows
+                for name, value in zip(discrete_names, row)
+            )
+            # A complete, duplicate-free table with only active levels and the
+            # arithmetically expected row count is necessarily the full product.
+            incompatible_discrete = (
+                len(supplied_rows) != expected_combinations
+                or len(set(supplied_rows)) != len(supplied_rows)
+                or foreign_level
+            )
+            if (
+                set(supplied_parameters) != set(expected_parameters)
+                or any(
+                    supplied_parameters[name] != parameter
+                    for name, parameter in expected_parameters.items()
+                )
+                or resolved.is_constrained
+                or incompatible_discrete
+            ):
+                raise IncompatibilityError(
+                    "The supplied search space is incompatible with the multi-step "
+                    "DAG. Use the DAG's complete, unconstrained search space."
+                )
+    else:
+        expected = dag.full_searchspace
+        resolved = expected if searchspace is None else searchspace
+        expected_parameters = {
+            parameter.name: parameter for parameter in expected.parameters
+        }
+        supplied_parameters = {
+            parameter.name: parameter for parameter in resolved.parameters
+        }
+        discrete_names = tuple(
+            parameter.name for parameter in expected.discrete.parameters
         )
-    }
-    supplied_discrete = {
-        tuple(row)
-        for row in resolved.discrete.exp_rep.reindex(columns=discrete_names).itertuples(
-            index=False, name=None
-        )
-    }
-    if (
-        set(supplied_parameters) != set(expected_parameters)
-        or any(
-            supplied_parameters[name] != parameter
-            for name, parameter in expected_parameters.items()
-        )
-        or resolved.is_constrained
-        or supplied_discrete != expected_discrete
-    ):
-        raise IncompatibilityError(
-            "The supplied search space is incompatible with the multi-step DAG. "
-            "Use the DAG's complete, unconstrained search space."
-        )
+        expected_discrete = {
+            tuple(row)
+            for row in expected.discrete.exp_rep[list(discrete_names)].itertuples(
+                index=False, name=None
+            )
+        }
+        supplied_discrete = {
+            tuple(row)
+            for row in resolved.discrete.exp_rep.reindex(
+                columns=discrete_names
+            ).itertuples(index=False, name=None)
+        }
+        if (
+            set(supplied_parameters) != set(expected_parameters)
+            or any(
+                supplied_parameters[name] != parameter
+                for name, parameter in expected_parameters.items()
+            )
+            or resolved.is_constrained
+            or supplied_discrete != expected_discrete
+        ):
+            raise IncompatibilityError(
+                "The supplied search space is incompatible with the multi-step DAG. "
+                "Use the DAG's complete, unconstrained search space."
+            )
 
     expected_targets = tuple(target.name for target in dag.objective.targets)
     supplied_targets = tuple(target.name for target in objective.targets)
@@ -681,9 +788,86 @@ def _condition_node_model(model: Model, inputs: Tensor, outputs: Tensor) -> Mode
     return _make_node_model(conditioned_models)
 
 
+def _ensure_layout_local_surrogate(
+    node: MultiStepNode, surrogate: object, label: str
+) -> None:
+    """Reject surrogates that are not verified for product-free layouts.
+
+    Args:
+        node: The node whose output is fitted.
+        surrogate: The configured or retained surrogate instance.
+        label: The output label used in the error message.
+
+    Raises:
+        IncompatibilityError: If the surrogate is not the built-in Gaussian process
+            surrogate. The feasibility classifier is not an output regressor and is
+            fitted exclusively through its separate cross-fit path.
+    """
+    if type(surrogate) is not GaussianProcessSurrogate:
+        raise IncompatibilityError(
+            f"Node '{node.name}' uses surrogate '{type(surrogate).__name__}' for "
+            f"output '{label}', which is not verified to operate as a product-free "
+            "output regressor. Use the built-in Gaussian process surrogate."
+        )
+
+
+def _predicted_mean_template_used(node: MultiStepNode, frame: pd.DataFrame) -> bool:
+    """Tell whether one frame reaches the auxiliary ``PREDICTED_MEAN`` template.
+
+    ``_predicted_mean_rows`` walks the node outputs in order and stops at the first
+    output without a finite successful value. The configured template is used only
+    if the first output already has such a value in a frame that also contains a
+    failure.
+
+    Args:
+        node: The node whose failure mode is checked.
+        frame: Raw feasibility rows with the joint label and output columns.
+
+    Returns:
+        ``True`` if the auxiliary fit reaches ``_make_local_surrogate`` for this
+        frame.
+    """
+    labels = frame[FEASIBILITY_LABEL]
+    successes = labels.eq(True)
+    if not labels.eq(False).any() or not successes.any():
+        return False
+    return any(
+        _is_finite_observation(value)
+        for value in frame.loc[successes, node.output_names[0]]
+    )
+
+
+def _predicted_mean_auxiliary_used_in_oof(
+    node: MultiStepNode, raw_frame: pd.DataFrame
+) -> bool:
+    """Tell whether a visited out-of-fold training frame reaches the auxiliary fit.
+
+    Args:
+        node: The configured node.
+        raw_frame: Raw feasibility rows with labels and group identities.
+
+    Returns:
+        ``True`` only if at least one fold with known test labels has a training
+        frame that reaches the auxiliary template.
+    """
+    if not any(
+        condition.column in node.output_names
+        for condition in node.feasibility_conditions
+    ):
+        return False
+    known = raw_frame[FEASIBILITY_LABEL].notna().to_numpy()
+    if not known.any():
+        return False
+    return any(
+        any(known[position] for position in test_positions)
+        and _predicted_mean_template_used(node, raw_frame.iloc[train_positions])
+        for train_positions, test_positions in _make_grouped_folds(raw_frame)
+    )
+
+
 def _make_local_surrogate(
     node: MultiStepNode,
-    searchspace: SearchSpace,
+    fit_context: _FitInputContext,
     target: Target,
     measurements: pd.DataFrame,
     label: str,
@@ -693,7 +877,7 @@ def _make_local_surrogate(
 
     Args:
         node: The node owning the output model.
-        searchspace: The local input space for the surrogate.
+        fit_context: The local input context for the surrogate.
         target: The output target and its pre-transformations.
         measurements: The usable local observations for this output.
         label: The output name used in contextual errors.
@@ -709,8 +893,13 @@ def _make_local_surrogate(
     """
     objective = target.to_objective()
     surrogate = deepcopy(node.surrogate_model if template is None else template)
+    if isinstance(fit_context, _FactorizedInputLayout):
+        _ensure_layout_local_surrogate(node, surrogate, label)
     if len(measurements) >= 2:
-        surrogate.fit(searchspace, objective, measurements)
+        if fit_context is not None and isinstance(fit_context, _FactorizedInputLayout):
+            _fit_layout_surrogate(surrogate, fit_context, objective, measurements)
+        else:
+            surrogate.fit(cast(SearchSpace, fit_context), objective, measurements)
         return surrogate
 
     if not isinstance(surrogate, GaussianProcessSurrogate):
@@ -720,6 +909,9 @@ def _make_local_surrogate(
             f"{len(measurements)} usable measurement(s)."
         )
 
+    if isinstance(fit_context, _FactorizedInputLayout):
+        _validate_layout_surrogate(surrogate, fit_context)
+
     try:
         import botorch
         import torch
@@ -728,17 +920,17 @@ def _make_local_surrogate(
         from baybe.utils.dataframe import to_tensor
 
         prior_measurements = measurements.iloc[:0].copy()
-        context = _ModelContext(searchspace, objective, prior_measurements)
+        context = _make_model_context(fit_context, objective, prior_measurements)
         kernel, mean, likelihood, _ = surrogate._resolve_components(context)
         train_x, train_y = to_tensor(
-            pd.DataFrame(columns=searchspace.comp_rep_columns),
+            pd.DataFrame(columns=fit_context.comp_rep_columns),
             objective._pre_transform(prior_measurements, allow_extra=True),
         )
         if train_y.ndim == 1:
             train_y = train_y.unsqueeze(-1)
         input_transform = (
             surrogate._make_input_transform(context)
-            if searchspace.comp_rep_columns
+            if fit_context.comp_rep_columns
             else None
         )
         surrogate._model = botorch.models.SingleTaskGP(
@@ -750,17 +942,17 @@ def _make_local_surrogate(
             covar_module=kernel,
             likelihood=likelihood,
         )
-        surrogate._searchspace = searchspace
+        surrogate._searchspace = fit_context
         surrogate._objective = objective
         surrogate._measurements = prior_measurements
         surrogate._measurements_hash = hash_measurements(prior_measurements)
-        surrogate._input_scaler = surrogate._make_input_scaler(searchspace)
+        surrogate._input_scaler = surrogate._make_input_scaler(fit_context)
         surrogate._output_scaler = surrogate._make_output_scaler(
             objective, prior_measurements
         )
         if len(measurements) == 1:
             train_x, train_y = to_tensor(
-                searchspace.transform(measurements, allow_extra=True),
+                fit_context.transform(measurements, allow_extra=True),
                 objective._pre_transform(measurements, allow_extra=True),
             )
             if train_y.ndim == 1:
@@ -889,9 +1081,17 @@ class _MultiStepModelBase(_ModelBase):
             The model publishing the provided node models.
 
         Raises:
-            IncompatibilityError: If a DAG node has no model, a model belongs to an
-                unknown node, or a model's output count does not match its node.
+            IncompatibilityError: If the DAG is product-free, a DAG node has no model,
+                a model belongs to an unknown node, or a model's output count does not
+                match its node.
         """
+        if dag.product_free:
+            raise IncompatibilityError(
+                "The product-free multi-step path rejects externally fitted node "
+                "models: their input order, transforms, and fantasy support cannot "
+                "be verified from the DAG alone. Fit the network through its own "
+                "training data instead."
+            )
         model = cls(
             dag=dag,
             num_network_samples=num_network_samples,
@@ -1198,7 +1398,7 @@ class _MultiStepModelBase(_ModelBase):
         template: SurrogateProtocol,
         label: str,
         *,
-        fit_searchspace: SearchSpace | None = None,
+        fit_searchspace: _FitInputContext | None = None,
     ) -> SurrogateProtocol:
         """Fit a copy of a local model on the node's training frame.
 
@@ -1222,8 +1422,11 @@ class _MultiStepModelBase(_ModelBase):
         """
         measurements = frame[[*self.dag.context.input_names(node), label]].copy()
         if fit_searchspace is None:
-            fit_searchspace = _make_local_searchspace(
-                self.dag.context, node, measurements
+            fit_searchspace = _make_local_fit_context(
+                self.dag.context,
+                node,
+                measurements,
+                product_free=self.dag.product_free,
             )
         return _make_local_surrogate(
             node,
@@ -1270,10 +1473,11 @@ class _MultiStepModelBase(_ModelBase):
                 training_views = _make_regression_training_frames(
                     self.dag, node, training_raw
                 )
-                fold_searchspace = _make_local_searchspace(
+                fold_searchspace = _make_local_fit_context(
                     self.dag.context,
                     node,
                     training_raw[list(input_names)],
+                    product_free=self.dag.product_free,
                 )
                 test_inputs = raw_frame.iloc[known_test_positions][list(input_names)]
                 for output_name in constrained_outputs:
@@ -1301,7 +1505,12 @@ class _MultiStepModelBase(_ModelBase):
                                     ).unsqueeze(-2)
                                 )
                                 values = _interval_probability(
-                                    node, output_name, posterior
+                                    node,
+                                    output_name,
+                                    posterior,
+                                    posterior_index=(
+                                        0 if self.dag.product_free else None
+                                    ),
                                 ).reshape(-1)
                     except Exception as ex:
                         raise IncompatibilityError(
@@ -1342,8 +1551,107 @@ class _MultiStepModelBase(_ModelBase):
         # every piece of state from the new data anyway.
         template = self._feasibility_models.get(node.name, _MultiStepGPClassifier())
         classifier = evolve(template)
-        classifier.fit(feature_searchspace, target.to_objective(), classifier_frame)
+        if isinstance(feature_searchspace, _FactorizedInputLayout):
+            _fit_layout_surrogate(
+                classifier, feature_searchspace, target.to_objective(), classifier_frame
+            )
+        else:
+            classifier.fit(feature_searchspace, target.to_objective(), classifier_frame)
         return classifier, feature_names
+
+    def _validate_product_free_fit(
+        self,
+        node_frames: Mapping[str, pd.DataFrame],
+        feasibility_frames: Mapping[str, pd.DataFrame],
+        *,
+        include_training_view_auxiliaries: bool,
+    ) -> None:
+        """Validate every product-free template before any node starts fitting.
+
+        The check covers the retained or configured output templates and the
+        configured ``PREDICTED_MEAN`` auxiliary template actually used by the
+        subsequent training-view or out-of-fold fits. Directly fitted nodes use
+        every output template; nodes that only contribute out-of-fold features use
+        the conditioned outputs that the classifier fits. It never evaluates a
+        factory and never touches published state.
+
+        Args:
+            node_frames: Views for the nodes whose output models or priors will be
+                fitted.
+            feasibility_frames: Raw-label frames for configured nodes.
+            include_training_view_auxiliaries: Whether the subsequent step materializes
+                node training views, so every ``PREDICTED_MEAN`` auxiliary fit counts.
+                Direct fits only reach the out-of-fold auxiliary path.
+
+        Raises:
+            IncompatibilityError: If a used template or parameter override is not
+                verified for the product-free input layout.
+        """
+        layouts: dict[str, _FitInputContext] = {}
+        for node_name, frame in node_frames.items():
+            node = self.dag.node_by_name[node_name]
+            layouts[node_name] = _make_local_fit_context(
+                self.dag.context,
+                node,
+                frame[list(self.dag.context.input_names(node))],
+                product_free=True,
+            )
+        for node_name, frame in feasibility_frames.items():
+            if node_name in layouts:
+                continue
+            node = self.dag.node_by_name[node_name]
+            if not frame[FEASIBILITY_LABEL].notna().any():
+                continue
+            if not any(
+                condition.column in node.output_names
+                for condition in node.feasibility_conditions
+            ):
+                continue
+            layouts[node_name] = _make_local_fit_context(
+                self.dag.context,
+                node,
+                frame[list(self.dag.context.input_names(node))],
+                product_free=True,
+            )
+        for node_name, layout in layouts.items():
+            node = self.dag.node_by_name[node_name]
+            retained = self._node_surrogates.get(node_name, {})
+            output_names = (
+                node.output_names
+                if node_name in node_frames
+                else _conditioned_output_names(node)
+            )
+            templates: list[tuple[SurrogateProtocol, str]] = [
+                (retained.get(output_name, node.surrogate_model), output_name)
+                for output_name in output_names
+            ]
+            seen: set[int] = set()
+            for template, label in templates:
+                if id(template) in seen:
+                    continue
+                seen.add(id(template))
+                _ensure_layout_local_surrogate(node, template, label)
+                assert type(template) is GaussianProcessSurrogate
+                _validate_layout_surrogate(template, layout)
+        for node_name, frame in feasibility_frames.items():
+            node = self.dag.node_by_name[node_name]
+            if (
+                node.infeasible_measurement_mode
+                is not InfeasibleMeasurementMode.PREDICTED_MEAN
+            ):
+                continue
+            if include_training_view_auxiliaries:
+                used = _predicted_mean_template_used(node, frame)
+            else:
+                used = _predicted_mean_auxiliary_used_in_oof(node, frame)
+            if not used:
+                continue
+            layout = layouts.get(node_name)
+            if layout is None:
+                continue
+            template = node.surrogate_model
+            _ensure_layout_local_surrogate(node, template, node.name)
+            _validate_layout_surrogate(template, layout)
 
     def _fit_node_frames(
         self,
@@ -1412,7 +1720,7 @@ class _MultiStepModelBase(_ModelBase):
         new_feasibility: dict[str, _MultiStepGPClassifier] = {}
         new_feasibility_feature_names: dict[str, dict[str, str]] = {}
         output_frames: dict[str, dict[str, pd.DataFrame]] = {}
-        fit_searchspaces: dict[str, SearchSpace] = {}
+        fit_searchspaces: dict[str, _FitInputContext] = {}
 
         # Validate both independent views before any expensive fitting.
         for node_name, frame in (*node_frames.items(), *feasibility_frames.items()):
@@ -1548,10 +1856,19 @@ class _MultiStepModelBase(_ModelBase):
             if too_few_outputs and not initialize_priors:
                 continue
             output_frames[node_name] = per_output_frames
-            fit_searchspaces[node_name] = _make_local_searchspace(
+            fit_searchspaces[node_name] = _make_local_fit_context(
                 self.dag.context,
                 node,
                 frame[list(self.dag.context.input_names(node))],
+                product_free=self.dag.product_free,
+            )
+        if self.dag.product_free:
+            # Nodes without enough output rows are skipped above, but existing raw
+            # feasibility data still cross-fits their output templates later.
+            self._validate_product_free_fit(
+                {node_name: node_frames[node_name] for node_name in fit_searchspaces},
+                feasibility_frames,
+                include_training_view_auxiliaries=False,
             )
         for node_name in self._node_names:
             node = self.dag.node_by_name[node_name]
@@ -1702,16 +2019,19 @@ class _MultiStepModelBase(_ModelBase):
                 f"Node '{node_name}' lacks an output model needed to calculate its "
                 "feasibility features."
             )
-        searchspace = self._get_node_surrogate_searchspace(node_name)
-        if searchspace is None:
-            searchspace = _make_local_searchspace(
-                self.dag.context, node, inputs[list(self.dag.context.input_names(node))]
+        fit_context = self._get_node_surrogate_searchspace(node_name)
+        if fit_context is None:
+            fit_context = _make_local_fit_context(
+                self.dag.context,
+                node,
+                inputs[list(self.dag.context.input_names(node))],
+                product_free=self.dag.product_free,
             )
         import torch
 
         from baybe.utils.dataframe import to_tensor
 
-        tensor = to_tensor(searchspace.transform(inputs, allow_extra=True)).unsqueeze(
+        tensor = to_tensor(fit_context.transform(inputs, allow_extra=True)).unsqueeze(
             -2
         )
         with torch.no_grad():
@@ -1778,8 +2098,8 @@ class _MultiStepModelBase(_ModelBase):
                 f"The feasibility model for node '{node_name}' has not been "
                 "initialized."
             )
-        searchspace = classifier._searchspace
-        if searchspace is None:
+        fit_context = classifier._searchspace
+        if fit_context is None:
             raise IncompatibilityError(
                 f"The joint feasibility feature space for node '{node_name}' is "
                 "unavailable."
@@ -1787,7 +2107,7 @@ class _MultiStepModelBase(_ModelBase):
         feature_names = self._feasibility_feature_names[node_name]
         base_columns = tuple(
             column
-            for column in searchspace.comp_rep_columns
+            for column in fit_context.comp_rep_columns
             if column not in feature_names.values()
         )
         if len(base_columns) != inputs_comp.shape[-1]:
@@ -1832,7 +2152,7 @@ class _MultiStepModelBase(_ModelBase):
             feature_name: output_name
             for output_name, feature_name in feature_names.items()
         }
-        if searchspace.comp_rep_columns:
+        if fit_context.comp_rep_columns:
             classifier_inputs = torch.cat(
                 [
                     output_features[feature_to_output[column]]
@@ -1840,7 +2160,7 @@ class _MultiStepModelBase(_ModelBase):
                     else inputs_comp[
                         ..., source_indices[column] : source_indices[column] + 1
                     ]
-                    for column in searchspace.comp_rep_columns
+                    for column in fit_context.comp_rep_columns
                 ],
                 dim=-1,
             )
@@ -2035,8 +2355,10 @@ class _MultiStepModelBase(_ModelBase):
                 f"Node '{node_name}' has no fitted model."
             ) from ex
 
-    def _get_node_surrogate_searchspace(self, node_name: str) -> SearchSpace | None:
-        """Validate and retrieve the common retained output-fit search space."""
+    def _get_node_surrogate_searchspace(
+        self, node_name: str
+    ) -> _FitInputContext | None:
+        """Validate and retrieve the common retained output-fit context."""
         node = self.dag.node_by_name[node_name]
         surrogates = self._node_surrogates.get(node_name)
         if not surrogates:
@@ -2047,7 +2369,7 @@ class _MultiStepModelBase(_ModelBase):
                 f"the declared outputs {node.output_names}."
             )
 
-        searchspaces: list[SearchSpace] = []
+        fit_contexts: list[_FitInputContext] = []
         for output_name in node.output_names:
             surrogate = surrogates[output_name]
             if not isinstance(surrogate, Surrogate):
@@ -2055,23 +2377,22 @@ class _MultiStepModelBase(_ModelBase):
                     f"The fitted surrogate for output '{output_name}' of node "
                     f"'{node_name}' cannot transform local inputs."
                 )
-            searchspace = surrogate._searchspace
-            if searchspace is None:
+            fit_context = surrogate._searchspace
+            if fit_context is None:
                 raise IncompatibilityError(
                     f"The fitted surrogate for output '{output_name}' of node "
-                    f"'{node_name}' has no local fit search space."
+                    f"'{node_name}' has no local fit context."
                 )
-            searchspaces.append(searchspace)
+            fit_contexts.append(fit_context)
 
-        shared = searchspaces[0]
+        shared = fit_contexts[0]
         if any(
-            searchspace != shared
-            or searchspace.comp_rep_columns != shared.comp_rep_columns
-            for searchspace in searchspaces[1:]
+            context != shared or context.comp_rep_columns != shared.comp_rep_columns
+            for context in fit_contexts[1:]
         ):
             raise IncompatibilityError(
                 f"The fitted output surrogates for node '{node_name}' do not share "
-                "one local fit search space."
+                "one local fit context."
             )
         return shared
 
@@ -2093,15 +2414,18 @@ class _MultiStepModelBase(_ModelBase):
             return searchspace.comp_rep_columns
 
         # Models supplied through ``from_node_models`` have no retained BayBE fit
-        # search space. Preserve their historical input-order contract only for
-        # that advanced entry point.
+        # context. Preserve their historical input-order contract only for that
+        # advanced entry point.
         outputs = {
             feature.name: 0.0
             for feature in self.dag.context._features(node)
             if feature.parameter is None
         }
-        return _make_local_searchspace(
-            self.dag.context, node, pd.DataFrame([outputs])
+        return _make_local_fit_context(
+            self.dag.context,
+            node,
+            pd.DataFrame([outputs]),
+            product_free=self.dag.product_free,
         ).comp_rep_columns
 
     def make_node_fantasies(
@@ -2414,7 +2738,7 @@ class _MultiStepModelBase(_ModelBase):
     def _transform_local_inputs(
         self,
         inputs: pd.DataFrame,
-        searchspace: SearchSpace | None,
+        fit_context: _FitInputContext | None,
         model: Model,
         *,
         node_name: str,
@@ -2424,7 +2748,7 @@ class _MultiStepModelBase(_ModelBase):
         Args:
             inputs: The node's own parameters and configured historical features in
                 experimental representation.
-            searchspace: The common search space used to fit the local outputs.
+            fit_context: The common context used to fit the local outputs.
             model: The fitted BoTorch model supplying device and dtype.
             node_name: The node name used in error messages.
 
@@ -2435,12 +2759,11 @@ class _MultiStepModelBase(_ModelBase):
         Raises:
             IncompatibilityError: If the fitted search space is unavailable.
         """
-        if searchspace is None:
+        if fit_context is None:
             raise IncompatibilityError(
-                f"The fitted surrogate for node '{node_name}' has no local fit "
-                f"search space."
+                f"The fitted surrogate for node '{node_name}' has no local fit context."
             )
-        comp_rep = searchspace.transform(inputs)
+        comp_rep = fit_context.transform(inputs)
         reference = next(model.parameters())
         from baybe.utils.dataframe import to_tensor
 
@@ -2463,8 +2786,8 @@ class _MultiStepModelBase(_ModelBase):
                 transformed inputs are inconsistent with the node model.
         """
         node_model = self.get_node_model(node_name)
-        searchspace = self._get_node_surrogate_searchspace(node_name)
-        if searchspace is None:
+        fit_context = self._get_node_surrogate_searchspace(node_name)
+        if fit_context is None:
             raise IncompatibilityError(
                 f"The fitted surrogate for node '{node_name}' cannot transform "
                 f"local inputs."
@@ -2472,7 +2795,7 @@ class _MultiStepModelBase(_ModelBase):
 
         return self._transform_local_inputs(
             inputs,
-            searchspace,
+            fit_context,
             node_model,
             node_name=node_name,
         )
@@ -3006,7 +3329,9 @@ def _propagate_network_samples(
     ] = {}
     for node_name in model._node_names:
         node = model.dag.node_by_name[node_name]
-        parameter_columns = {column: column for column in node._own_comp_rep_columns}
+        parameter_columns = {
+            column: column for column in model.dag._node_own_comp_rep_columns(node)
+        }
         output_columns: dict[str, tuple[str, int]] = {}
         for feature in model.dag.context._features(node):
             if feature.parameter is None:

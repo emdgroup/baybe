@@ -86,6 +86,11 @@ from .data import (
     pending_actions,
     register_action,
 )
+from .kgfn.direct import (
+    DirectPartialKnowledgeGradientFN,
+    recommend_direct,
+)
+from .kgfn.references import _derive_seed
 from .node import MultiStepNode
 
 if TYPE_CHECKING:
@@ -1058,18 +1063,29 @@ class MultiStepCampaign(SerialMixin):
                 "Configure the acquisition either on the campaign or on its "
                 "BotorchRecommender, not both."
             )
-        selected = self.recommender.select_recommender(
-            batch_size=batch_size,
-            measurements=pd.DataFrame(index=range(len(self.data.measurements))),
-        )
-        if isinstance(selected, RandomRecommender):
-            return self._recommend_random(batch_size, selected)
-
         acquisition_function = (
             self.acquisition_function
             if self.acquisition_function is not None
             else bayesian.acquisition_function
         )
+        direct_policy = (
+            acquisition_function
+            if isinstance(acquisition_function, DirectPartialKnowledgeGradientFN)
+            else None
+        )
+        # Validate the direct opt-in before recommender selection or any expensive
+        # model fit can run.
+        if direct_policy is not None:
+            direct_policy.validate_context(self.dag, self.data, batch_size)
+
+        selected = self.recommender.select_recommender(
+            batch_size=batch_size,
+            measurements=pd.DataFrame(index=range(len(self.data.measurements))),
+        )
+        if isinstance(selected, RandomRecommender):
+            if direct_policy is not None:
+                return self._recommend_random_direct(batch_size, direct_policy)
+            return self._recommend_random(batch_size, selected)
 
         graph_aware = acquisition_function is None or isinstance(
             acquisition_function, GraphAwareAcquisitionProtocol
@@ -1077,52 +1093,63 @@ class MultiStepCampaign(SerialMixin):
         policy: GraphAwareAcquisitionProtocol | None = None
         resolved_acquisition: AcquisitionFunction | None = None
         score_scale: ScoreScale | None = None
-
-        if graph_aware:
-            selected_policy = (
-                cast(GraphAwareAcquisitionProtocol, PartialKnowledgeGradientFN())
-                if acquisition_function is None
-                else cast(GraphAwareAcquisitionProtocol, acquisition_function)
-            )
-            policy = selected_policy
-            policy.validate_context(self.dag, self.data, batch_size)
-        else:
-            assert acquisition_function is None or isinstance(
-                acquisition_function, AcquisitionFunction
-            )
-            resolver = BotorchRecommender(acquisition_function=acquisition_function)
-            resolved_acquisition = resolver._get_acquisition_function(
-                self.dag.objective
-            )
-            if (
-                self.dag.objective.is_multi_output
-                and not resolved_acquisition.supports_multi_output
-            ):
-                raise IncompatibleAcquisitionFunctionError(
-                    f"You attempted to use the single-output acquisition function "
-                    f"'{resolved_acquisition.__class__.__name__}' for a "
-                    f"{len(self.dag.objective.targets)}-target multi-output "
-                    "objective."
-                )
-            if resolved_acquisition.is_analytic:
-                raise IncompatibilityError(
-                    f"The stock acquisition "
-                    f"'{resolved_acquisition.__class__.__name__}' is analytic, but "
-                    "the multi-step network posterior is sample-based. Use a "
-                    "q-batched, Monte-Carlo acquisition function instead."
-                )
-            score_scale = _resolve_score_scale(resolved_acquisition)
-            if isinstance(resolved_acquisition, ModelReferenceExpectedImprovement):
-                resolved_acquisition.validate_context(self.dag, self.data, batch_size)
-
         call_seed = None
-        if isinstance(resolved_acquisition, ModelReferenceExpectedImprovement):
-            call_seed = _draw_model_reference_seed()
+        if direct_policy is None:
+            if graph_aware:
+                selected_policy = (
+                    cast(GraphAwareAcquisitionProtocol, PartialKnowledgeGradientFN())
+                    if acquisition_function is None
+                    else cast(GraphAwareAcquisitionProtocol, acquisition_function)
+                )
+                policy = selected_policy
+                policy.validate_context(self.dag, self.data, batch_size)
+            else:
+                assert acquisition_function is None or isinstance(
+                    acquisition_function, AcquisitionFunction
+                )
+                resolver = BotorchRecommender(acquisition_function=acquisition_function)
+                resolved_acquisition = resolver._get_acquisition_function(
+                    self.dag.objective
+                )
+                if (
+                    self.dag.objective.is_multi_output
+                    and not resolved_acquisition.supports_multi_output
+                ):
+                    raise IncompatibleAcquisitionFunctionError(
+                        f"You attempted to use the single-output acquisition function "
+                        f"'{resolved_acquisition.__class__.__name__}' for a "
+                        f"{len(self.dag.objective.targets)}-target multi-output "
+                        "objective."
+                    )
+                if resolved_acquisition.is_analytic:
+                    raise IncompatibilityError(
+                        f"The stock acquisition "
+                        f"'{resolved_acquisition.__class__.__name__}' is analytic, but "
+                        "the multi-step network posterior is sample-based. Use a "
+                        "q-batched, Monte-Carlo acquisition function instead."
+                    )
+                score_scale = _resolve_score_scale(resolved_acquisition)
+                if isinstance(resolved_acquisition, ModelReferenceExpectedImprovement):
+                    resolved_acquisition.validate_context(
+                        self.dag, self.data, batch_size
+                    )
+                    call_seed = _draw_model_reference_seed()
+
         self._fit_node_models()
         pending = pending_actions(self.data._contexts)
         plans = self._executable_plans()
 
-        if graph_aware:
+        if direct_policy is not None:
+            action, _diagnostics = recommend_direct(
+                self.model,
+                plans,
+                pending,
+                policy=direct_policy,
+                feasibility_threshold=self.feasibility_threshold,
+                cost_mode=self.cost_mode,
+            )
+            actions = [action]
+        elif graph_aware:
             assert policy is not None
             policy.validate_model(self.model)
             actions = recommend_graph_aware(
@@ -1268,6 +1295,113 @@ class MultiStepCampaign(SerialMixin):
         self.data = self.data.with_process_state(experiments, counter)
         return result
 
+    def _recommend_random_direct(
+        self,
+        batch_size: int,
+        policy: DirectPartialKnowledgeGradientFN,
+    ) -> pd.DataFrame:
+        """Sample executable initial actions parameter-wise without a product."""
+        experiments = dict(self.data._contexts)
+        counter = self.data._experiment_counter
+        first_new_id = self._first_new_identifier()
+        generator = np.random.Generator(
+            np.random.PCG64(
+                _derive_seed(
+                    policy.search_profile.sampling_seed,
+                    "direct-random",
+                    str(first_new_id),
+                    str(len(self.data.measurements)),
+                )
+            )
+        )
+        actions: list[_PendingAction] = []
+        for _ in range(batch_size):
+            pending = pending_actions(experiments)
+            plans = make_executable_plans(
+                self.dag,
+                self.data,
+                experiments,
+                mode=self.execution_mode,
+                first_new_id=max(first_new_id, counter + 1),
+            )
+            if not plans:
+                raise IncompatibilityError(
+                    "The direct random stage found no executable local action."
+                )
+            names = sorted({plan.node for plan in plans})
+            order = [names[int(index)] for index in generator.permutation(len(names))]
+            plan: _ExecutablePlan | None = None
+            inputs: dict[str, Any] | None = None
+            for name in order:
+                node = self.dag.node_by_name[name]
+                layout = node._own_parameter_layout
+                candidates = [
+                    candidate for candidate in plans if candidate.node == name
+                ]
+                for _attempt in range(100):
+                    candidate_plan = candidates[
+                        int(generator.integers(len(candidates)))
+                    ]
+                    candidate_inputs = dict(candidate_plan.inputs)
+                    for parameter in layout.parameters:
+                        if parameter.is_continuous:
+                            candidate_inputs[parameter.name] = float(
+                                generator.uniform(
+                                    parameter.bounds.lower, parameter.bounds.upper
+                                )
+                            )
+                        else:
+                            values = parameter.active_values
+                            candidate_inputs[parameter.name] = values[
+                                int(generator.integers(len(values)))
+                            ]
+                    if not contains_action(
+                        pending, node=name, inputs=candidate_inputs, dag=self.dag
+                    ):
+                        plan = candidate_plan
+                        inputs = candidate_inputs
+                        break
+                if plan is not None:
+                    break
+            if plan is None or inputs is None:
+                raise IncompatibilityError(
+                    "The direct random stage could not sample a distinct pending "
+                    "action from any executable node."
+                )
+            action = _PendingAction(
+                plan.node, inputs, plan.experiment_id, plan.parent_refs
+            )
+            experiments, counter = register_action(
+                experiments,
+                counter,
+                experiment_id=action.experiment_id,
+                node=action.node,
+                inputs=action.inputs,
+                parent_refs=action.parent_refs,
+                data=self.data,
+                dag=self.dag,
+            )
+            actions.append(action)
+
+        columns = [EXPERIMENT_ID, NODE]
+        rows = []
+        for action in actions:
+            rows.append(
+                {
+                    EXPERIMENT_ID: action.experiment_id,
+                    NODE: action.node,
+                    **action.inputs,
+                }
+            )
+            for name in self.dag.context.input_names(
+                self.dag.node_by_name[action.node]
+            ):
+                if name not in columns:
+                    columns.append(name)
+        result = pd.DataFrame(rows).reindex(columns=columns)
+        self.data = self.data.with_process_state(experiments, counter)
+        return result
+
     def _first_new_identifier(self) -> int:
         """Return the first numeric experiment suffix not known to be in use.
 
@@ -1308,16 +1442,46 @@ class MultiStepCampaign(SerialMixin):
         Missing outputs receive GP priors, and upstream-only measurements update
         only the nodes for which real data exists.
         """
-        self.model._fit_node_data_with_priors(
+        model = self.model
+        if not self.dag.product_free:
+            model._fit_node_data_with_priors(
+                {
+                    node.name: self.data.node_training_data(self.dag, node.name)
+                    for node in self.dag.nodes
+                },
+                feasibility_frames={
+                    node.name: self.data.node_feasibility_training_data(
+                        self.dag, node.name
+                    )
+                    for node in self.dag.nodes
+                    if node.feasibility_conditions
+                },
+            )
+            return
+        feasibility_frames = {
+            node.name: self.data.node_feasibility_training_data(self.dag, node.name)
+            for node in self.dag.nodes
+            if node.feasibility_conditions
+        }
+        # Validate all templates before materializing training views, which can
+        # already run PREDICTED_MEAN auxiliary fits. The empty input frames match
+        # the layout parameters used by the later fits without evaluating any
+        # factory or touching the published model state.
+        input_frames = {
+            node.name: pd.DataFrame(columns=list(self.dag.context.input_names(node)))
+            for node in self.dag.nodes
+        }
+        model._validate_product_free_fit(
+            input_frames,
+            feasibility_frames,
+            include_training_view_auxiliaries=True,
+        )
+        model._fit_node_data_with_priors(
             {
                 node.name: self.data.node_training_data(self.dag, node.name)
                 for node in self.dag.nodes
             },
-            feasibility_frames={
-                node.name: self.data.node_feasibility_training_data(self.dag, node.name)
-                for node in self.dag.nodes
-                if node.feasibility_conditions
-            },
+            feasibility_frames=feasibility_frames,
         )
 
 

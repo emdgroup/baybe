@@ -11,6 +11,7 @@ from graphlib import CycleError, TopologicalSorter
 from math import prod
 from typing import TYPE_CHECKING, Any
 
+import cattrs
 from attrs import define, evolve, field
 from attrs.validators import and_, deep_iterable, instance_of, min_len
 
@@ -22,6 +23,7 @@ from baybe.targets.base import Target
 from baybe.utils.basic import refers_to, to_tuple
 
 from ._columns import RESERVED_COLUMNS
+from ._layout import _FactorizedInputLayout
 from .context import MultiStepContext
 from .node import MultiStepNode
 
@@ -48,10 +50,35 @@ class MultiStepDAG(SerialMixin):
     """All nodes in the DAG. Their order is irrelevant."""
 
     objective: Objective = field(validator=instance_of(Objective))
-    """The optimization objective, whose targets cover all graph outputs."""
+    """The optimization objective.
+
+    By default its targets must cover every graph output. With
+    :attr:`allow_partial_leaf_objective`, a nonempty subset of the graph outputs
+    is sufficient.
+    """
 
     context: MultiStepContext = field(factory=MultiStepContext, kw_only=True)
     """The historical features supplied to every node model."""
+
+    product_free: bool = field(default=False, validator=instance_of(bool), kw_only=True)
+    """Whether to use the product-free factorized input layout.
+
+    When enabled, parameter metadata and DAG validation are derived directly from
+    the node-owned parameter definitions instead of constructing per-node or global
+    parameter products. The default keeps the legacy search-space path unchanged.
+    """
+
+    allow_partial_leaf_objective: bool = field(
+        default=False, validator=instance_of(bool), kw_only=True
+    )
+    """Whether the objective may reference a subset of the graph outputs.
+
+    When enabled, the objective may target a nonempty subset of the graph
+    outputs. Unknown, duplicate, or non-leaf targets remain invalid. The graph
+    outputs and their order are unchanged; the objective selects its targets via
+    :attr:`objective_output_indices`. This opt-in is independent of
+    :attr:`product_free`.
+    """
 
     @context.validator
     def _validate_context(self, _attribute, value):  # noqa: DOC101, DOC103
@@ -147,7 +174,9 @@ class MultiStepDAG(SerialMixin):
             )
 
         comp_rep_columns = [
-            column for node in self.nodes for column in node._own_comp_rep_columns
+            column
+            for node in self.nodes
+            for column in self._node_own_comp_rep_columns(node)
         ]
 
         auxiliary_columns: dict[str, str] = {}
@@ -207,8 +236,13 @@ class MultiStepDAG(SerialMixin):
                 f"{collisions}."
             )
 
-        for node in self.nodes:
-            self._validate_node_searchspace(node)
+        if self.product_free:
+            # Validates names, active levels, and encodings parameter-wise
+            # without constructing any parameter product.
+            _ = self._factorized_layout
+        else:
+            for node in self.nodes:
+                self._validate_node_searchspace(node)
 
     @objective.validator
     def _validate_objective(self, _attribute, value):  # noqa: DOC101, DOC103
@@ -234,7 +268,7 @@ class MultiStepDAG(SerialMixin):
             )
 
         missing = sorted(leaf_outputs - set(target_names))
-        if missing:
+        if missing and not self.allow_partial_leaf_objective:
             raise IncompatibilityError(
                 f"The objective must include every graph output, but targets for "
                 f"{missing} are missing."
@@ -260,6 +294,14 @@ class MultiStepDAG(SerialMixin):
                 f"which is not supported by multi-step planning."
             )
 
+    def _node_own_comp_rep_columns(self, node: MultiStepNode) -> tuple[str, ...]:
+        """Return a node's own comp-rep columns under the active layout path."""
+        if not node.inputs:
+            return ()
+        if self.product_free:
+            return node._own_parameter_layout.comp_rep_columns
+        return node._own_comp_rep_columns
+
     @property
     def _complete_measurement_columns(self) -> tuple[str, ...]:
         """The parameter, output, and condition columns of a complete DAG row."""
@@ -278,6 +320,20 @@ class MultiStepDAG(SerialMixin):
                 )
             )
         )
+
+    @cached_property
+    def _factorized_layout(self) -> _FactorizedInputLayout:
+        """The product-free layout of all node-owned parameters."""
+        return _FactorizedInputLayout.from_parameters(
+            [parameter for node in self.nodes for parameter in node.inputs]
+        )
+
+    @property
+    def comp_rep_columns(self) -> tuple[str, ...]:
+        """The DAG-wide computational-representation columns."""
+        if self.product_free:
+            return self._factorized_layout.comp_rep_columns
+        return self.full_searchspace.comp_rep_columns
 
     @property
     def final_nodes(self) -> tuple[str, ...]:
@@ -637,6 +693,13 @@ def _structure_multistep_dag(
     )
 
 
+_dag_unstructure_hook = cattrs.gen.make_dict_unstructure_fn(
+    MultiStepDAG,
+    converter,
+    product_free=cattrs.gen.override(omit_if_default=True),
+    allow_partial_leaf_objective=cattrs.gen.override(omit_if_default=True),
+)
+converter.register_unstructure_hook(MultiStepDAG, _dag_unstructure_hook)
 converter.register_structure_hook(MultiStepDAG, _structure_multistep_dag)
 
 

@@ -53,6 +53,7 @@ from .data import (
     _PendingAction,
     contains_action,
 )
+from .kgfn.gain import GainScale, _make_gain_context, _validate_gain_models
 
 if TYPE_CHECKING:
     from botorch.acquisition.acquisition import (
@@ -64,9 +65,6 @@ if TYPE_CHECKING:
     from .model import MultiStepModel
     from .node import MultiStepNode
 
-
-GainScale = Literal["linear", "log"]
-"""The representation used by an acquisition function's raw gain."""
 
 CostMode = Literal["node", "remaining"]
 """The existing cost value used to weight an executable action's gain."""
@@ -216,44 +214,9 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             IncompatibilityError: If the input shape, baseline, or gain
                 is invalid or non-finite.
         """
-        import torch
+        from .kgfn.gain import compute_pkgfn_gain
 
-        if (
-            fantasy_terminal_means.dim() < 2
-            or min(fantasy_terminal_means.shape[:2]) < 1
-        ):
-            raise IncompatibilityError(
-                "Expected nonempty (fantasies, terminal candidates, batch...) "
-                "means, got "
-                f"{tuple(fantasy_terminal_means.shape)}."
-            )
-        if (
-            not torch.isfinite(fantasy_terminal_means).all()
-            or not torch.isfinite(baseline).all()
-        ):
-            raise IncompatibilityError(
-                "p-KGFN requires finite means and finite fantasy baselines."
-            )
-
-        best = fantasy_terminal_means.amax(dim=1)
-        try:
-            if torch.broadcast_shapes(best.shape, baseline.shape) != best.shape:
-                raise IncompatibilityError(
-                    f"The fantasy baseline with shape {tuple(baseline.shape)} does "
-                    f"not broadcast to the best-terminal means with shape "
-                    f"{tuple(best.shape)}."
-                )
-        except RuntimeError as ex:
-            raise IncompatibilityError(
-                f"The fantasy baseline with shape {tuple(baseline.shape)} does not "
-                f"broadcast to the best-terminal means with shape {tuple(best.shape)}."
-            ) from ex
-
-        expected = (best - baseline).mean(dim=0)
-        if not torch.isfinite(expected).all():
-            raise IncompatibilityError("The p-KGFN gain estimate is not finite.")
-        # Average the fantasy gains first, then clamp the finished estimate.
-        return expected.clamp_min(0.0)
+        return compute_pkgfn_gain(fantasy_terminal_means, baseline)
 
     @staticmethod
     def _compute_terminal_means_from_network_samples(
@@ -274,110 +237,9 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             IncompatibilityError: If the sample shape is unsupported, a sample or
                 utility is non-finite, or the objective has incompatible outputs.
         """
-        import torch
+        from .kgfn.gain import compute_terminal_means_from_network_samples
 
-        if (
-            samples.shape[-2:] != (1, len(dag.graph_output_names))
-            or not torch.isfinite(samples).all()
-        ):
-            raise IncompatibilityError(
-                "Terminal samples must be finite, have q=1, and match the graph "
-                "outputs."
-            )
-
-        objective_samples = samples.index_select(
-            -1,
-            torch.tensor(
-                dag.objective_output_indices,
-                dtype=torch.long,
-                device=samples.device,
-            ),
-        )
-        # Network outputs are raw node measurements. In particular, a
-        # ``DesirabilityObjective`` configured with ``as_pre_transformation``
-        # exposes a one-output surrogate objective from ``to_botorch()``; using
-        # that here would select only one of the raw target columns. Apply the
-        # objective's end-to-end target transformations and scalarization instead.
-        objective_function = dag.objective._full_transformation
-        objective_function.to(device=samples.device, dtype=samples.dtype)
-        for component in getattr(objective_function, "objectives", ()):
-            component.to(device=samples.device, dtype=samples.dtype)
-        utilities = objective_function(objective_samples, None)
-        if utilities.shape != samples.shape[:-1] or not torch.isfinite(utilities).all():
-            raise IncompatibilityError(
-                "The objective must produce one finite utility per terminal sample."
-            )
-
-        return utilities.squeeze(-1).mean(dim=0)
-
-    def _compute_terminal_means(
-        self,
-        model: MultiStepModel,
-        points: Tensor,
-    ) -> Tensor:
-        """Evaluate terminal decisions with the learned network.
-
-        Args:
-            model: The current or hypothetical network model.
-            points: Terminal reference configurations.
-
-        Returns:
-            Mean utility per decision.
-        """
-        samples = model.draw_network_samples(
-            points,
-            self.num_network_samples,
-            sampling_seed=self.sampling_seed,
-        )
-        return self._compute_terminal_means_from_network_samples(model.dag, samples)
-
-    def _pending_branches(  # noqa: DOC502
-        self,
-        model: MultiStepModel,
-        pending: tuple[_PendingAction, ...],
-        reference_points: Tensor,
-        baseline: Tensor,
-    ) -> tuple[tuple[MultiStepModel, Tensor], ...]:
-        """Create one conditioned network model per joint pending fantasy.
-
-        All pending executions of a node are sampled jointly so that their GP
-        correlations and observation noise are retained. Nodes are independent
-        given their local data, so the joint network fantasy combines the node
-        samples by index rather than by a Cartesian product.
-
-        Args:
-            model: The fitted real network model.
-            pending: The reserved local executions.
-            reference_points: The global terminal reference configurations.
-            baseline: The baseline utility without pending conditioning.
-
-        Returns:
-            One ``(conditioned_model, baseline_value)`` pair per pending fantasy.
-            Without pending actions, the original model and baseline are
-            returned unchanged.
-
-        Raises:
-            IncompatibilityError: If a pending node is unknown or a local input
-                cannot be transformed.
-        """
-        import torch
-
-        if not pending:
-            return ((model, baseline),)
-
-        conditioned_models = model.condition_on_pending(
-            pending,
-            num_fantasies=self.num_fantasies,
-            sampling_seed=self.sampling_seed,
-        )
-        branches: list[tuple[MultiStepModel, Tensor]] = []
-        for conditioned in conditioned_models:
-            with torch.no_grad():
-                value = self._compute_terminal_means(
-                    conditioned, reference_points
-                ).max()
-            branches.append((conditioned, value))
-        return tuple(branches)
+        return compute_terminal_means_from_network_samples(dag, samples)
 
     def _make_terminal_reference_tensor(
         self, dag: MultiStepDAG, reference: Tensor
@@ -425,28 +287,6 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             .unsqueeze(-2)
         )
 
-    def _validate_fitted_models(self, model: MultiStepModel) -> None:
-        """Validate the fitted-model capabilities required by p-KGFN.
-
-        Args:
-            model: The fitted network model.
-
-        Raises:
-            IncompatibilityError: If a node model is batched or cannot be conditioned.
-        """
-        import torch
-
-        for name in model.dag.topological_order:
-            node_model = model.get_node_model(name)
-            if node_model.batch_shape != torch.Size() or not callable(
-                getattr(node_model, "condition_on_observations", None)
-            ):
-                raise IncompatibilityError(
-                    f"p-KGFN requires an unbatched model supporting fantasy "
-                    f"conditioning for node '{name}', but found "
-                    f"'{type(node_model).__name__}'."
-                )
-
     def make_gain_function(  # noqa: DOC502
         self,
         model: MultiStepModel,
@@ -471,77 +311,22 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
             IncompatibilityError: If the acquisition or model capabilities are
                 unsupported.
         """
-        import torch
-
-        self._validate_fitted_models(model)
+        _validate_gain_models(model)
         reference = next(model.parameters())
         reference_points = self._make_terminal_reference_tensor(model.dag, reference)
-        with torch.no_grad():
-            baseline = self._compute_terminal_means(model, reference_points).max()
-        pending_branches = self._pending_branches(
+        context = _make_gain_context(
             model,
             pending,
             reference_points,
-            baseline,
+            num_fantasies=self.num_fantasies,
+            num_network_samples=self.num_network_samples,
+            sampling_seed=self.sampling_seed,
         )
 
         def gain(
             _context: _ActionContext, node: MultiStepNode, inputs: Tensor
         ) -> Tensor:
-            """Compute p-KGFN's raw utility gain before action weighting."""
-            import torch
-            from botorch.settings import propagate_grads
-            from gpytorch.settings import fast_pred_var
-
-            if inputs.dim() < 2 or inputs.shape[-2] != 1:
-                raise IncompatibilityError(
-                    "p-KGFN candidate inputs must have shape "
-                    f"'(batch..., 1, d_node)', got {tuple(inputs.shape)}."
-                )
-            candidate_batch = tuple(inputs.shape[:-2])
-            fantasy_means: list[Tensor] = []
-            fantasy_baselines: list[Tensor] = []
-            for conditioned_model, branch_baseline in pending_branches:
-                with propagate_grads(True), fast_pred_var(False):
-                    fantasy_model = conditioned_model.make_node_fantasies(
-                        node, inputs, self.num_fantasies, self.sampling_seed
-                    )
-                fantasy_batch = tuple(
-                    fantasy_model.get_node_model(node.name).batch_shape
-                )
-                expected_batch = (self.num_fantasies, *candidate_batch)
-                if fantasy_batch == expected_batch:
-                    output_batch = fantasy_batch
-                elif fantasy_batch == (*expected_batch, 1):
-                    output_batch = expected_batch
-                else:
-                    raise IncompatibilityError(
-                        f"Fantasizing node '{node.name}' produced batch shape "
-                        f"{fantasy_batch}, expected {expected_batch} optionally "
-                        "followed by a singleton output axis."
-                    )
-                points = reference_points.reshape(
-                    len(reference_points),
-                    *([1] * len(fantasy_batch)),
-                    *reference_points.shape[-2:],
-                ).expand(
-                    len(reference_points),
-                    *fantasy_batch,
-                    *reference_points.shape[-2:],
-                )
-                with propagate_grads(True), fast_pred_var(False):
-                    means = self._compute_terminal_means(fantasy_model, points)
-                if output_batch != fantasy_batch:
-                    means = means.squeeze(-1)
-                fantasy_means.append(means.movedim(1, 0))
-                fantasy_baselines.append(
-                    branch_baseline.expand(self.num_fantasies, *candidate_batch)
-                )
-
-            return self._compute_pkgfn_gain(
-                torch.cat(fantasy_means, dim=0),
-                torch.cat(fantasy_baselines, dim=0),
-            )
+            return context.evaluate(node, inputs)
 
         return gain
 
@@ -643,7 +428,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
         Raises:
             IncompatibilityError: If a node model is batched or cannot be conditioned.
         """
-        self._validate_fitted_models(model)
+        _validate_gain_models(model)
 
 
 ScoreScale = GainScale

@@ -27,7 +27,7 @@ from baybe.exceptions import (
     IncompleteMeasurementsError,
     InvalidTargetValueError,
 )
-from baybe.parameters.base import Parameter
+from baybe.parameters.base import DiscreteParameter, Parameter
 from baybe.recommenders.pure.experimental_feasibility import (
     InfeasibleMeasurementMode,
 )
@@ -47,6 +47,8 @@ from .node import FeasibilityCondition, MultiStepNode
 
 if TYPE_CHECKING:
     from baybe.searchspace.core import SearchSpace
+
+    from ._layout_fit import _FitInputContext
 
 ExecutionMode = Literal["process", "functional"]
 """How executable actions are derived from recorded experiments."""
@@ -1106,6 +1108,9 @@ class MultiStepData(SerialMixin):
                 _validate_node_inputs(
                     node, pd.DataFrame([dict(action.inputs)]), context=dag.context
                 )
+                # Stored pending actions keep their reserved declared level even if
+                # that level has since become inactive. Only new reservations are
+                # checked in ``register_action``.
                 for parent_name, ref in action.parent_refs.items():
                     if experiment.bindings.get(parent_name) != ref:
                         raise IncompatibilityError(
@@ -1770,6 +1775,8 @@ def register_action(
     import pandas as pd
 
     _validate_node_inputs(node_object, pd.DataFrame([inputs]), context=dag.context)
+    if dag.product_free:
+        _validate_active_action_levels(node_object, inputs)
 
     if contains_action(pending_actions(experiments), node=node, inputs=inputs, dag=dag):
         raise IncompatibilityError(
@@ -1902,21 +1909,11 @@ def _parent_inputs_match(
     return True
 
 
-def _make_local_searchspace(
+def _make_local_parameters(
     context: MultiStepContext, node: MultiStepNode, frame: pd.DataFrame
-) -> SearchSpace:
-    """Create the synthetic local fit search space of a node.
-
-    Args:
-        context: The configured history policy.
-        node: The node whose model is fitted.
-        frame: Local training data containing the configured history.
-
-    Returns:
-        The local search space covering own parameters and historical features.
-    """
+) -> list[Parameter]:
+    """Create the local parameter definitions of a node fit context."""
     from baybe.parameters.numerical import NumericalContinuousParameter
-    from baybe.searchspace.core import SearchSpace
 
     parent_parameters: list[NumericalContinuousParameter] = []
     for name in (
@@ -1937,7 +1934,71 @@ def _make_local_searchspace(
         parent_parameters.append(
             NumericalContinuousParameter(name, bounds=(lower, upper))
         )
-    return SearchSpace.from_product([*context._parameters(node), *parent_parameters])
+    return [*context._parameters(node), *parent_parameters]
+
+
+def _make_local_fit_context(
+    context: MultiStepContext,
+    node: MultiStepNode,
+    frame: pd.DataFrame,
+    *,
+    product_free: bool,
+) -> _FitInputContext:
+    """Create the synthetic local fit context of a node.
+
+    Args:
+        context: The configured history policy.
+        node: The node whose model is fitted.
+        frame: Local training data containing the configured history.
+        product_free: Whether to return the product-free input layout instead of a
+            real search space.
+
+    Returns:
+        The local input context covering own parameters and historical features.
+    """
+    from baybe.multistep._layout import _FactorizedInputLayout
+    from baybe.searchspace.core import SearchSpace
+
+    parameters = _make_local_parameters(context, node, frame)
+    if product_free:
+        return _FactorizedInputLayout.from_parameters(parameters)
+    return SearchSpace.from_product(parameters)
+
+
+def _make_local_searchspace(
+    context: MultiStepContext, node: MultiStepNode, frame: pd.DataFrame
+) -> SearchSpace:
+    """Create the synthetic local fit search space of a node.
+
+    Args:
+        context: The configured history policy.
+        node: The node whose model is fitted.
+        frame: Local training data containing the configured history.
+
+    Returns:
+        The local search space covering own parameters and historical features.
+    """
+    from baybe.searchspace.core import SearchSpace
+
+    return SearchSpace.from_product(_make_local_parameters(context, node, frame))
+
+
+def _is_finite_observation(value: object, /) -> bool:
+    """Tell whether a successful output bundle contains a usable numeric value.
+
+    Args:
+        value: The output value of one successful observation.
+
+    Returns:
+        ``True`` only for numeric, finite values. Missing, NaN, and infinite values
+        are not usable training observations.
+    """
+    if value is None:
+        return False
+    try:
+        return bool(np.isfinite(float(value)))
+    except (TypeError, ValueError):
+        return False
 
 
 def _predicted_mean_rows(
@@ -1972,10 +2033,16 @@ def _predicted_mean_rows(
         failure_inputs, columns=list(context.input_names(node))
     )
     for output_name in node.output_names:
+        # The finite filter is product-free-only; the legacy path keeps its
+        # historical ``is not None`` selection and still rejects NaN outputs.
         output_successes = [
             (inputs, values[output_name])
             for inputs, values in successes
-            if values[output_name] is not None
+            if (
+                _is_finite_observation(values[output_name])
+                if dag.product_free
+                else values[output_name] is not None
+            )
         ]
         if not output_successes:
             raise IncompatibilityError(
@@ -1988,10 +2055,12 @@ def _predicted_mean_rows(
             columns=[*context.input_names(node), output_name],
         )
         try:
-            searchspace = _make_local_searchspace(context, node, success_frame)
+            fit_context = _make_local_fit_context(
+                context, node, success_frame, product_free=dag.product_free
+            )
             target = dag.target_by_output.get(output_name, NumericalTarget(output_name))
             surrogate = _make_local_surrogate(
-                node, searchspace, target, success_frame, output_name
+                node, fit_context, target, success_frame, output_name
             )
             with torch.no_grad():
                 predictions = (
@@ -2050,6 +2119,34 @@ def _get_feasibility_label(
             "a known failed feasibility condition."
         )
     return successful
+
+
+def _validate_active_action_levels(
+    node: MultiStepNode,
+    inputs: Mapping[str, Any],
+) -> None:
+    """Reject newly reserved actions that use inactive discrete levels.
+
+    Historical observations deliberately keep the full parameter level set; this
+    check applies only to actions that are about to be published.
+
+    Args:
+        node: The node whose action is validated.
+        inputs: The complete local input of the action.
+
+    Raises:
+        IncompatibilityError: If a discrete parameter uses a non-active level.
+    """
+    for parameter in node.inputs:
+        if not isinstance(parameter, DiscreteParameter):
+            continue
+        value = inputs[parameter.name]
+        if value not in parameter.active_values:
+            raise IncompatibilityError(
+                f"The action for node '{node.name}' uses value {value!r} for "
+                f"parameter '{parameter.name}', which is not an active level. "
+                f"Active levels: {list(parameter.active_values)}."
+            )
 
 
 def _validate_node_inputs(

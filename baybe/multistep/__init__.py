@@ -19,6 +19,7 @@ from .context import ContextMode, MultiStepContext
 from .dag import MultiStepDAG
 from .data import MultiStepData, NodeMeasurement
 from .execution import evaluate_configuration
+from .kgfn.direct import DirectPartialKnowledgeGradientFN, TerminalSearchProfile
 from .node import FeasibilityCondition, MultiStepNode
 
 if TYPE_CHECKING:
@@ -48,9 +49,11 @@ __all__ = [
     "MultiStepData",
     "MultiStepModel",
     "MultiStepNode",
+    "DirectPartialKnowledgeGradientFN",
     "FeasibilityCondition",
     "NodeMeasurement",
     "PartialKnowledgeGradientFN",
+    "TerminalSearchProfile",
     "ModelReferenceExpectedImprovement",
     "MREI",
     "validate_network_measurements",
