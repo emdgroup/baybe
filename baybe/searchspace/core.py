@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import gc
+import warnings
 from collections.abc import Collection, Iterable, Iterator, Sequence
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar, NoReturn
+from typing import TYPE_CHECKING, ClassVar
 
 import narwhals.stable.v2 as nw
 import pandas as pd
@@ -14,10 +15,7 @@ from typing_extensions import Self, assert_never, override
 
 from baybe.constraints import validate_constraints
 from baybe.constraints.base import Constraint
-from baybe.exceptions import (
-    DeprecationError,
-    _UnsupportedSearchSpaceAttributeError,
-)
+from baybe.exceptions import _UnsupportedSearchSpaceAttributeError
 from baybe.parameters import TaskParameter
 from baybe.parameters.base import ContinuousParameter, DiscreteParameter, Parameter
 from baybe.searchspace.candidates import ProductCandidates, TableCandidates
@@ -208,22 +206,37 @@ class SearchSpace(SerialMixin):
         return (*self.discrete.parameters, *self.continuous.parameters)
 
     @property
-    def constraints(self) -> NoReturn:
+    def constraints(self) -> tuple[Constraint, ...]:
         """Deprecated!"""
         filters_field = fields(ProductCandidates).filters.name
         constraints_field = fields(SubspaceContinuous).constraints.name
         batch_field = fields(SubspaceDiscrete).batch_constraints.name
-        raise DeprecationError(
-            f"'{type(self).__name__}.constraints' is no longer available. "
-            f"For discrete spaces, the concept of space-filtering constraints is only "
-            f"meaningful when working with filtered candidate set representations. "
-            f"In this specific case, they can still be accessed via "
-            f"'{ProductCandidates.__name__}.{filters_field}'. "
-            f"Discrete batch constraints can be retrieved via "
-            f"'{SubspaceDiscrete.__name__}.{batch_field}'. "
-            f"For continuous constraints, use "
-            f"'{SubspaceContinuous.__name__}.{constraints_field}'."
+        warnings.warn(
+            f"Accessing '{type(self).__name__}.constraints' is deprecated and "
+            f"will no longer be supported in a future version. For discrete spaces, "
+            f"the concept of space-filtering constraints is only meaningful when "
+            f"working with filtered candidate set representations. In this specific "
+            f"case, they can still be accessed via "
+            f"'{ProductCandidates.__name__}.{filters_field}'. Discrete batch "
+            f"constraints can be retrieved via "
+            f"'{SubspaceDiscrete.__name__}.{batch_field}'. For "
+            f"continuous constraints, use "
+            f"'{SubspaceContinuous.__name__}.{constraints_field}'.",
+            DeprecationWarning,
+            stacklevel=2,
         )
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=(
+                    rf"Accessing '{type(self.discrete).__name__}\.constraints' "
+                    rf"is deprecated and will no longer be supported "
+                    rf"in a future version\."
+                ),
+                category=DeprecationWarning,
+            )
+            discrete_constraints = self.discrete.constraints
+        return (*discrete_constraints, *self.continuous.constraints)
 
     @property
     def type(self) -> SearchSpaceType:

@@ -1559,14 +1559,44 @@ def test_deprecated_toggle_discrete_candidates_too_many_booleans():
 
 
 def test_deprecated_subspace_constraints_property():
-    """Accessing ``constraints`` on ``SubspaceDiscrete`` raises a deprecation error."""
-    subspace = CategoricalParameter("p", ["a", "b"]).to_subspace()
-    with pytest.raises(DeprecationError, match="no longer available"):
-        subspace.constraints
+    """Accessing ``constraints`` warns and returns retained constraints."""
+    parameter = CategoricalParameter("p", ["a", "b"])
+    filtering_constraint = DiscreteSelectionConstraint(
+        ["p"], [SubSelectionCondition(["a"])]
+    )
+    batch_constraint = DiscreteBatchConstraint(["p"])
+    subspace = SubspaceDiscrete.from_product(
+        [parameter], constraints=[filtering_constraint, batch_constraint]
+    )
+
+    with pytest.warns(DeprecationWarning, match="will no longer be supported"):
+        constraints = subspace.constraints
+
+    assert constraints == (filtering_constraint, batch_constraint)
 
 
 def test_deprecated_searchspace_constraints_property():
-    """Accessing ``constraints`` on ``SearchSpace`` raises a deprecation error."""
-    searchspace = SearchSpace.from_product([CategoricalParameter("p", ["a", "b"])])
-    with pytest.raises(DeprecationError, match="no longer available"):
-        searchspace.constraints
+    """Accessing ``constraints`` warns and returns retained constraints."""
+    discrete_parameter = CategoricalParameter("p", ["a", "b"])
+    continuous_parameter = NumericalContinuousParameter("x", (0, 1))
+    filtering_constraint = DiscreteSelectionConstraint(
+        ["p"], [SubSelectionCondition(["a"])]
+    )
+    batch_constraint = DiscreteBatchConstraint(["p"])
+    continuous_constraint = ContinuousLinearConstraint(["x"], "=", [1], 0)
+    searchspace = SearchSpace.from_product(
+        [discrete_parameter, continuous_parameter],
+        [filtering_constraint, batch_constraint, continuous_constraint],
+    )
+
+    with pytest.warns(
+        DeprecationWarning, match="will no longer be supported"
+    ) as record:
+        constraints = searchspace.constraints
+
+    assert len(record) == 1
+    assert constraints == (
+        filtering_constraint,
+        batch_constraint,
+        continuous_constraint,
+    )

@@ -6,7 +6,7 @@ import gc
 import warnings
 from collections.abc import Collection, Iterator, Sequence
 from math import prod
-from typing import TYPE_CHECKING, Any, NoReturn, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import narwhals.stable.v2 as nw
 import numpy as np
@@ -736,19 +736,32 @@ class SubspaceDiscrete(SerialMixin):
 
     # >>>>>>>>>> Deprecation
     @property
-    def constraints(self) -> NoReturn:
+    def constraints(self) -> tuple[DiscreteConstraint, ...]:
         """Deprecated!"""
         filters_field = fields(ProductCandidates).filters.name
         batch_field = fields(SubspaceDiscrete).batch_constraints.name
-        raise DeprecationError(
-            f"'{type(self).__name__}.constraints' is no longer available. "
-            f"For discrete spaces, the concept of space-filtering constraints is only "
-            f"meaningful when working with filtered candidate set representations. "
-            f"In this specific case, they can still be accessed via "
-            f"'{ProductCandidates.__name__}.{filters_field}'. "
-            f"Discrete batch constraints can be retrieved via "
-            f"'{type(self).__name__}.{batch_field}'."
+        warnings.warn(
+            f"Accessing '{type(self).__name__}.constraints' is deprecated and "
+            f"will no longer be supported in a future version. For discrete spaces, "
+            f"the concept of space-filtering constraints is only meaningful when "
+            f"working with filtered candidate set representations. In this specific "
+            f"case, they can still be accessed via "
+            f"'{ProductCandidates.__name__}.{filters_field}'. Discrete batch "
+            f"constraints can be retrieved via "
+            f"'{type(self).__name__}.{batch_field}'.",
+            DeprecationWarning,
+            stacklevel=2,
         )
+        filtering_constraints = (
+            tuple(
+                filter_
+                for filter_ in self.candidates.filters
+                if isinstance(filter_, DiscreteConstraint)
+            )
+            if isinstance(self.candidates, ProductCandidates)
+            else ()
+        )
+        return (*filtering_constraints, *self.batch_constraints)
 
     @property
     def constraints_batch(self) -> tuple[DiscreteBatchConstraint, ...]:
