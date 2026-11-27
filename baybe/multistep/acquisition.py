@@ -68,6 +68,9 @@ if TYPE_CHECKING:
 GainScale = Literal["linear", "log"]
 """The representation used by an acquisition function's raw gain."""
 
+CostMode = Literal["node", "remaining"]
+"""The existing cost value used to weight an executable action's gain."""
+
 
 @runtime_checkable
 class GraphAwareAcquisitionProtocol(Protocol):
@@ -121,7 +124,7 @@ class PartialKnowledgeGradientFN(AcquisitionFunction):
     reference set by the shared recommendation layer.
 
     The policy returns raw gains only. Action generation, success-risk
-    weighting, remaining-cost accounting, optimization, and final selection are
+    weighting, cost selection, optimization, and final selection are
     performed by the shared multi-step orchestration layer.
 
     Each node with feasibility conditions uses a joint-success classifier. Without a
@@ -662,6 +665,29 @@ _OPTIMIZER_SEED: int = 0
 """Deterministic seed for continuous local optimization."""
 
 
+def _get_action_cost(
+    dag: MultiStepDAG, plan: _ExecutablePlan, cost_mode: CostMode
+) -> float:
+    """Select an existing cost basis without changing process accounting.
+
+    Args:
+        dag: The DAG containing the plan's node.
+        plan: The executable action and its precomputed remaining cost.
+        cost_mode: Whether to use the node cost or remaining process cost.
+
+    Returns:
+        The selected positive scoring cost.
+
+    Raises:
+        ValueError: If the cost mode is unknown.
+    """
+    if cost_mode == "node":
+        return dag.node_by_name[plan.node].cost
+    if cost_mode == "remaining":
+        return plan.remaining_cost
+    raise ValueError(f"Unknown cost mode: {cost_mode!r}.")
+
+
 def _resolve_score_scale(acquisition: object) -> ScoreScale:
     """Resolve the declared gain scale of a supported stock acquisition.
 
@@ -726,7 +752,7 @@ def _score_actions(
         acquisition_values: Raw acquisition gains, in linear or log form.
         success_probabilities: Local next-measurement success probabilities,
             with exactly the same shape, dtype, and device as the gains.
-        cost: Positive cost of the next node measurement.
+        cost: Selected positive scoring cost.
         scale: Representation of the raw gains.
         allow_negative_gains: Permit finite signed linear estimates for gains
             whose implementation explicitly declares them.
@@ -847,7 +873,7 @@ def _make_tensor_score_acquisition(
         model: The model supplied to the native BoTorch acquisition base class.
         raw_score: The differentiable, unweighted score function.
         success_probability: The differentiable local action success predictor.
-        cost: Cost of the next node measurement.
+        cost: Selected positive scoring cost.
         scale: Representation of the raw score.
         feasibility_threshold: Minimum positive local success probability.
         allow_negative_gains: Permit signed linear gains whose implementation
@@ -1044,6 +1070,7 @@ def _optimize_node_actions(
     supports_signed_gains: bool,
     feasibility_threshold: float,
     pending: tuple[_PendingAction, ...],
+    cost_mode: CostMode = "remaining",
 ) -> tuple[_PendingAction, Tensor] | None:
     """Optimize one action context's discrete or mixed local search.
 
@@ -1060,6 +1087,8 @@ def _optimize_node_actions(
         feasibility_threshold: Minimum local feasibility scoring factor for an
             admissible candidate.
         pending: Already reserved actions that cannot be recommended again.
+        cost_mode: Whether to score with the next node's cost or the remaining
+            process cost.
 
     Returns:
         The optimized action and its weighted tensor score, or ``None`` if every
@@ -1098,7 +1127,7 @@ def _optimize_node_actions(
             _make_feasibility_scoring_factor(model, node, inputs),
             pending,
         ),
-        cost=problems[0].remaining_cost,
+        cost=_get_action_cost(model.dag, problems[0], cost_mode),
         scale=gain_scale,
         feasibility_threshold=feasibility_threshold,
         allow_negative_gains=supports_signed_gains,
@@ -1262,6 +1291,7 @@ def recommend_graph_aware(
     acquisition: GraphAwareAcquisitionProtocol,
     batch_size: int,
     feasibility_threshold: float = 1e-6,
+    cost_mode: CostMode = "remaining",
 ) -> list[_PendingAction]:
     """Score and select executable actions with a graph-aware acquisition.
 
@@ -1278,6 +1308,7 @@ def recommend_graph_aware(
         batch_size: The number of actions requested.
         feasibility_threshold: Minimum local feasibility scoring factor for an
             admissible candidate.
+        cost_mode: The cost basis used for scoring each executable action.
 
     Returns:
         The selected actions in descending weighted-score order.
@@ -1319,6 +1350,7 @@ def recommend_graph_aware(
             supports_signed_gains=acquisition.supports_signed_gains,
             feasibility_threshold=feasibility_threshold,
             pending=pending,
+            cost_mode=cost_mode,
         )
         if optimized is None:
             continue
@@ -1506,8 +1538,25 @@ def _optimize_stock_context(
     score_scale: ScoreScale,
     pending: tuple[_PendingAction, ...],
     feasibility_threshold: float,
+    cost_mode: CostMode = "remaining",
 ) -> tuple[pd.Series, Tensor] | None:
-    """Optimize the shared risk/cost score over one executable global context."""
+    """Optimize the shared risk/cost score over one executable global context.
+
+    Args:
+        model: The fitted network model.
+        plan: The executable action context.
+        discrete_candidate: One valid discrete global assignment.
+        fixed_parameters: Global inputs bound by the concrete process context.
+        branches: Pending-conditioned stock acquisition functions.
+        score_scale: The representation used by the acquisition gains.
+        pending: Already reserved actions to exclude.
+        feasibility_threshold: Minimum local success probability for scoring.
+        cost_mode: Whether to score with the next node's cost or the remaining
+            process cost.
+
+    Returns:
+        The optimized global candidate and score, or ``None`` if it is excluded.
+    """
     import torch
     from botorch.exceptions.warnings import OptimizationWarning
     from botorch.optim import optimize_acqf_mixed
@@ -1550,7 +1599,7 @@ def _optimize_stock_context(
         success_probability=lambda inputs: _stock_action_probability(
             model, plan, inputs, pending
         ),
-        cost=plan.remaining_cost,
+        cost=_get_action_cost(model.dag, plan, cost_mode),
         scale=score_scale,
         feasibility_threshold=feasibility_threshold,
     )
@@ -1634,6 +1683,7 @@ def recommend_stock(
     feasibility_threshold: float = 1e-6,
     first_new_id: int = 1,
     execution_mode: Literal["process", "functional"] = "process",
+    cost_mode: CostMode = "remaining",
 ) -> list[_PendingAction]:
     """Optimize stock acquisitions over executable actions using shared scoring.
 
@@ -1662,6 +1712,7 @@ def recommend_stock(
         first_new_id: The first identifier available for a new experiment.
         execution_mode: Whether global reference rows must be process-complete or
             may be composed from successful real references across experiments.
+        cost_mode: The cost basis used for scoring each executable action.
 
     Returns:
         The selected executable actions in descending score order.
@@ -1707,6 +1758,7 @@ def recommend_stock(
                 score_scale=score_scale,
                 pending=pending,
                 feasibility_threshold=feasibility_threshold,
+                cost_mode=cost_mode,
             )
             if optimized is None:
                 continue
