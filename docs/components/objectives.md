@@ -254,6 +254,13 @@ from baybe.targets import NumericalTarget
 
 objective = SingleTargetObjective(
     target=NumericalTarget(name="Yield"),
-    metadata={"description": "Maximize the yield of the coupling reaction."},
+    metadata={
+        "description": (
+            "A yield of about 85% is enough for scale-up. Among conditions "
+            "reaching it, prefer lower catalyst loading and avoid DMF and NMP, "
+            "because catalyst cost and solvent toxicity are not measured as "
+            "targets."
+        )
+    },
 )
 ```

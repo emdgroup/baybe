@@ -411,7 +411,13 @@ from baybe.targets import NumericalTarget
 
 target = NumericalTarget(
     name="Yield",
-    metadata={"description": "Isolated product yield", "unit": "%"},
+    metadata={
+        "description": (
+            "Isolated yield after recrystallization; values below 5% are within "
+            "the detection limit."
+        ),
+        "unit": "%",
+    },
 )
 ```
 

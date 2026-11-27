@@ -306,7 +306,7 @@ temperature = NumericalContinuousParameter(
     name="Temperature",
     bounds=(20, 120),
     metadata={
-        "description": "Reaction temperature",
+        "description": "Mixture temperature; conversion stalls below 40 °C.",
         "unit": "°C",
         "measured_at": "Reactor outlet",
     },
@@ -316,7 +316,7 @@ print(temperature.metadata)
 ```
 
 ~~~
-MeasurableMetadata(description='Reaction temperature', misc={'measured_at': 'Reactor outlet'}, unit='°C')
+MeasurableMetadata(description='Mixture temperature; conversion stalls below 40 °C.', misc={'measured_at': 'Reactor outlet'}, unit='°C')
 ~~~
 
 (parameter_kernel_overrides)=
