@@ -18,6 +18,7 @@ from .campaign import MultiStepCampaign
 from .context import ContextMode, MultiStepContext
 from .dag import MultiStepDAG
 from .data import MultiStepData, NodeMeasurement
+from .execution import evaluate_configuration
 from .node import FeasibilityCondition, MultiStepNode
 
 if TYPE_CHECKING:
@@ -53,4 +54,5 @@ __all__ = [
     "ModelReferenceExpectedImprovement",
     "MREI",
     "validate_network_measurements",
+    "evaluate_configuration",
 ]
