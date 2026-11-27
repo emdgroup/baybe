@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from functools import reduce
 from operator import add
-from typing import TYPE_CHECKING, Any, ClassVar, NoReturn, cast
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import torch
 from botorch.models.model import Model
@@ -27,6 +27,54 @@ if TYPE_CHECKING:
     from linear_operator.operators import LinearOperator
 
     from baybe.searchspace import SearchSpace
+
+_DEFAULT_N_MC_SAMPLES = 256
+"""The default number of posterior samples used to estimate the rank weights."""
+
+_DEFAULT_DILUTION_QUANTILE = 0.95
+"""The default quantile of the target model's ranking loss above which a source model's
+median ranking loss leads to its removal from the ensemble (prevents weight
+dilution)."""
+
+
+def _validate_weighting_settings(
+    n_mc_samples: Any, dilution_quantile: Any, /
+) -> tuple[int, float]:
+    """Validate the settings used for computing the rank weights.
+
+    Args:
+        n_mc_samples: The number of posterior samples used to estimate the weights.
+        dilution_quantile: The quantile of the target model's ranking loss above which
+            a source model's median ranking loss leads to its removal.
+
+    Raises:
+        TypeError: If ``n_mc_samples`` cannot be converted to an integer losslessly.
+        ValueError: If ``n_mc_samples`` is not positive or ``dilution_quantile`` is
+            not in ``(0, 1]``.
+
+    Returns:
+        The validated settings, with ``n_mc_samples`` converted to an integer and
+        ``dilution_quantile`` to a float.
+    """
+    try:
+        n_samples = int(n_mc_samples)
+    except (TypeError, ValueError) as ex:
+        raise TypeError(
+            f"'n_mc_samples' must be convertible to an integer, but got "
+            f"{n_mc_samples=}."
+        ) from ex
+    if isinstance(n_mc_samples, bool) or n_samples != n_mc_samples:
+        raise TypeError(f"'n_mc_samples' must be an integer, but got {n_mc_samples=}.")
+    if n_samples < 1:
+        raise ValueError(f"'n_mc_samples' must be positive, but got {n_mc_samples=}.")
+
+    quantile = float(dilution_quantile)
+    if not 0 < quantile <= 1:
+        raise ValueError(
+            f"'dilution_quantile' must be in (0, 1], but got {dilution_quantile=}."
+        )
+
+    return n_samples, quantile
 
 
 def _compute_ranking_loss(samples: Tensor, targets: Tensor, /) -> Tensor:
@@ -212,14 +260,6 @@ class RGPEModel(Model):
         :class:`~baybe.acquisition.acqfs.qKnowledgeGradient`.
     """
 
-    dilution_quantile: ClassVar[float] = 0.95
-    """The quantile of the target model's ranking loss above which a source model's
-    median ranking loss leads to its removal from the ensemble (prevents weight
-    dilution)."""
-
-    n_mc_samples: ClassVar[int] = 256
-    """The number of posterior samples used to estimate the rank weights."""
-
     def __init__(
         self,
         models: Sequence[SingleTaskGP],
@@ -227,8 +267,16 @@ class RGPEModel(Model):
         /,
         *,
         target_index: int | None = None,
+        n_mc_samples: int = _DEFAULT_N_MC_SAMPLES,
+        dilution_quantile: float = _DEFAULT_DILUTION_QUANTILE,
     ):
+        n_mc_samples, dilution_quantile = _validate_weighting_settings(
+            n_mc_samples, dilution_quantile
+        )
         super().__init__()
+        # The settings with which the rank weights are computed
+        self.n_mc_samples = n_mc_samples
+        self.dilution_quantile = dilution_quantile
         self.models = ModuleList(models)
         # The normalized ensemble weights, aligned with the members
         self.weights: Tensor
@@ -272,6 +320,9 @@ class RGPEModel(Model):
         train_y: Tensor,
         fit_gp: Callable[[Tensor, Tensor], SingleTaskGP],
         /,
+        *,
+        n_mc_samples: int = _DEFAULT_N_MC_SAMPLES,
+        dilution_quantile: float = _DEFAULT_DILUTION_QUANTILE,
     ) -> Self:
         """Fit one GP per task and combine them into a rank-weighted ensemble.
 
@@ -281,6 +332,10 @@ class RGPEModel(Model):
             train_x: The training inputs of all tasks (comp-rep, ``n x d``).
             train_y: The training targets of all tasks (``n x 1``).
             fit_gp: A callable fitting a Gaussian process to a subset of the data.
+            n_mc_samples: The number of posterior samples used to estimate the rank
+                weights.
+            dilution_quantile: The quantile of the target model's ranking loss above
+                which a source model's median ranking loss leads to its removal.
 
         Returns:
             The fitted ensemble, weighted by how well each member ranks the target
@@ -288,6 +343,11 @@ class RGPEModel(Model):
             combined, with uniform weights. With fewer than three target points, all
             members are weighted uniformly.
         """
+        # Validated before any model is fitted
+        n_mc_samples, dilution_quantile = _validate_weighting_settings(
+            n_mc_samples, dilution_quantile
+        )
+
         target_mask, source_masks = _split_by_task(searchspace, train_x)
 
         # Sources are fitted before the target, as the weights depend on the RNG state
@@ -297,7 +357,12 @@ class RGPEModel(Model):
             # Without two distinct target values, the target has no scale to define
             # the ensemble's output units, so the sources are combined on their own
             weights = train_x.new_full((len(source_models),), 1 / len(source_models))
-            return cls.from_ranked_models(source_models, weights)
+            return cls.from_ranked_models(
+                source_models,
+                weights,
+                n_mc_samples=n_mc_samples,
+                dilution_quantile=dilution_quantile,
+            )
 
         target_model = fit_gp(train_x[target_mask], target_y)
         models = (*source_models, target_model)
@@ -311,12 +376,18 @@ class RGPEModel(Model):
                 target_y.squeeze(-1),
                 source_models,
                 target_model,
-                n_samples=cls.n_mc_samples,
-                dilution_quantile=cls.dilution_quantile,
+                n_samples=n_mc_samples,
+                dilution_quantile=dilution_quantile,
             )
 
         # The target's standardization defines the ensemble's output units
-        return cls.from_ranked_models(models, weights, target_index=len(models) - 1)
+        return cls.from_ranked_models(
+            models,
+            weights,
+            target_index=len(models) - 1,
+            n_mc_samples=n_mc_samples,
+            dilution_quantile=dilution_quantile,
+        )
 
     @classmethod
     def from_ranked_models(
@@ -326,8 +397,23 @@ class RGPEModel(Model):
         /,
         *,
         target_index: int | None = None,
+        n_mc_samples: int = _DEFAULT_N_MC_SAMPLES,
+        dilution_quantile: float = _DEFAULT_DILUTION_QUANTILE,
     ) -> Self:
-        """Drop zero-weight models and renormalize the remaining weights."""
+        """Drop zero-weight models and renormalize the remaining weights.
+
+        Args:
+            models: The ensemble members.
+            weights: The weights of the members, aligned with ``models``.
+            target_index: The position of the target member, if any.
+            n_mc_samples: The number of posterior samples used to estimate the rank
+                weights.
+            dilution_quantile: The quantile of the target model's ranking loss above
+                which a source model's median ranking loss leads to its removal.
+
+        Returns:
+            The ensemble of the members with positive weight and the target member.
+        """
         keep = weights > 0
         if target_index is not None:
             # The target is kept even at zero weight since its noise is needed
@@ -338,6 +424,8 @@ class RGPEModel(Model):
             [m for m, k in zip(models, keep.tolist()) if k],
             kept / kept.sum(),
             target_index=target_index,
+            n_mc_samples=n_mc_samples,
+            dilution_quantile=dilution_quantile,
         )
 
     @override

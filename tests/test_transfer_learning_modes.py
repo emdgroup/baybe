@@ -392,7 +392,14 @@ def test_from_searchspace(n_rows, constant_target):
         received.append(y)
         return _make_gp(x, y, input_transform)
 
-    model = RGPEModel.from_searchspace(searchspace, train_x, train_y, make_gp)
+    model = RGPEModel.from_searchspace(
+        searchspace, train_x, train_y, make_gp, n_mc_samples=64.0, dilution_quantile=0.8
+    )
+
+    # The weighting settings are forwarded, with the sample count as an integer
+    assert model.n_mc_samples == 64
+    assert type(model.n_mc_samples) is int
+    assert model.dilution_quantile == 0.8
 
     # Sources in task order, then the target if it has a scale
     n_target = n_rows.get("T", 0)
@@ -433,6 +440,34 @@ def test_loocv_samples_match_loocv_gps(members):
         assert_close(
             fold.T.cov(), expected.distribution.covariance_matrix, rtol=0, atol=0.02
         )
+
+
+@pytest.mark.parametrize(
+    ("settings", "error"),
+    [
+        param({"n_mc_samples": 2.5}, TypeError, id="fractional_samples"),
+        param({"n_mc_samples": True}, TypeError, id="bool_samples"),
+        param({"n_mc_samples": "abc"}, TypeError, id="string_samples"),
+        param({"n_mc_samples": 0}, ValueError, id="zero_samples"),
+        param({"dilution_quantile": 0}, ValueError, id="zero_quantile"),
+        param({"dilution_quantile": 1.5}, ValueError, id="large_quantile"),
+    ],
+)
+def test_invalid_weighting_settings(members, settings, error):
+    """Invalid weighting settings raise, before any model is fitted."""
+    weights = torch.full((3,), 1 / 3, dtype=torch.float64)
+    with pytest.raises(error):
+        RGPEModel(members, weights, **settings)
+
+    def fit_gp(x: torch.Tensor, y: torch.Tensor) -> SingleTaskGP:
+        raise AssertionError("No model must be fitted for invalid settings.")
+
+    measurements = _make_measurements(A=3, T=3)
+    searchspace = _make_searchspace()
+    train_x = to_tensor(searchspace.transform(measurements, allow_extra=True))
+    train_y = to_tensor(measurements[["y"]])
+    with pytest.raises(error):
+        RGPEModel.from_searchspace(searchspace, train_x, train_y, fit_gp, **settings)
 
 
 def test_missing_source_data_raises():
