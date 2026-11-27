@@ -239,6 +239,14 @@ class SubspaceContinuous(SerialMixin):
             for flat_idx in order:
                 yield frozenset(chain(*select_via_flat_index(flat_idx, per_constraint)))
 
+    def _get_nth_inactive_combination(self, n: int, /) -> frozenset[str]:
+        """Get the n-th inactive-parameter combination via flat indexing."""
+        per_constraint = [
+            list(c.inactive_parameter_combinations())
+            for c in self.constraints_cardinality
+        ]
+        return frozenset(chain(*select_via_flat_index(n, per_constraint)))
+
     def to_searchspace(self) -> SearchSpace:
         """Turn the subspace into a search space with no discrete part."""
         from baybe.searchspace.core import SearchSpace

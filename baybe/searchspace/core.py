@@ -361,16 +361,15 @@ class SearchSpace(SerialMixin):
 
             case "ordered" | "shuffled":
                 n_continuous_subsets = max(self.continuous.n_subsets, 1)
-                continuous_subsets = self.continuous.inactive_parameter_combinations(
-                    mode="replace"
-                )
                 for combined_subset_idx in iter_indices(self.n_subsets or 1, mode=mode):
-                    discrete_subset_idx, _ = divmod(
+                    discrete_subset_idx, continuous_subset_idx = divmod(
                         combined_subset_idx, n_continuous_subsets
                     )
                     yield (
                         self.discrete._get_nth_subspace(discrete_subset_idx),
-                        next(continuous_subsets),
+                        self.continuous._get_nth_inactive_combination(
+                            continuous_subset_idx
+                        ),
                     )
 
             case _:
