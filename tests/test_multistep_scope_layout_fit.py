@@ -206,23 +206,32 @@ def test_layout_fit_reuses_and_invalidates_its_cache() -> None:
     assert surrogate._measurements_hash == hash(changed)
 
 
-def test_external_factory_is_rejected_before_publication() -> None:
-    """A factory without verified layout compatibility is rejected before fitting."""
+def test_layout_adapter_has_no_factory_allowlist() -> None:
+    """The adapter no longer classifies factories or kernels by exact type."""
+    import baybe.multistep._layout_fit as adapter
+
+    for name in (
+        "_collect_layout_factory_types",
+        "_collect_layout_kernel_types",
+        "_is_layout_compatible_factory",
+        "_is_layout_compatible_kernel_component",
+    ):
+        assert not hasattr(adapter, name)
+
+
+def test_layout_fit_rejects_non_gp_surrogate() -> None:
+    """A layout context accepts only Gaussian-process surrogates."""
     from baybe.multistep._configuration_space import _ConfigurationSpace
     from baybe.multistep._layout_fit import _fit_layout_surrogate
-    from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
-    from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
-
-    class _ExternalKernelFactory(EDBOKernelFactory):
-        """A look-alike factory outside the verified first-party allowlist."""
+    from baybe.surrogates.random_forest import RandomForestSurrogate
 
     parameters = _make_parameters()
-    frame = _make_frame()
-    objective = NumericalTarget("y").to_objective()
     layout = _ConfigurationSpace.from_parameters(parameters)
-    surrogate = GaussianProcessSurrogate(kernel_or_factory=_ExternalKernelFactory())
+    objective = NumericalTarget("y").to_objective()
+    frame = _make_frame()
+    surrogate = RandomForestSurrogate()
 
-    with pytest.raises(IncompatibilityError, match="not verified"):
+    with pytest.raises(IncompatibilityError, match="GaussianProcessSurrogate"):
         _fit_layout_surrogate(surrogate, layout, objective, frame)
 
     assert surrogate._searchspace is None

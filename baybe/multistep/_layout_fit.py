@@ -1,9 +1,12 @@
-"""Product-free fit integration for multi-step node models.
+"""Private compatibility shim for fitting Gaussian processes on factorized layouts.
 
 The generic surrogate API is intentionally unaware of the product-free input
-layout. This module reimplements the small fitting slice that a layout needs,
-using the same scaling, transformation, component resolution, and cache semantics
-as :class:`baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`.
+layout and requires a real :class:`~baybe.searchspace.core.SearchSpace`. This
+module bridges the gap for
+:class:`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`, using
+the same scaling, transformation, component resolution, and cache semantics as
+the regular fit path. It is not a general search-space replacement: layout fits
+accept only Gaussian-process surrogates.
 """
 
 from __future__ import annotations
@@ -24,14 +27,10 @@ from baybe.exceptions import (
     IncompatibleSurrogateError,
     UnusedObjectWarning,
 )
-from baybe.kernels.base import Kernel
 from baybe.objectives.base import Objective
 from baybe.parameters.categorical import TaskParameter
 from baybe.searchspace.core import SearchSpace
 from baybe.surrogates.base import _IDENTITY_TRANSFORM
-from baybe.surrogates.gaussian_process.components.generic import (
-    PlainGPComponentFactory,
-)
 from baybe.surrogates.gaussian_process.components.kernel import ICMKernelFactory
 from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.boolean import strtobool
@@ -174,184 +173,25 @@ def _make_model_context(
     return _ModelContext(cast(SearchSpace, context), objective, measurements)
 
 
-def _collect_layout_factory_types() -> frozenset[type]:
-    """Collect the exact classes of the first-party GP component factories.
-
-    The allowlist is deliberately exact-type based: an external class that merely
-    mimics a first-party module name, subclasses a shipped factory, or implements the
-    protocol must not inherit layout-compatibility trust. Any callable whose exact
-    class is not listed here is treated as unproven.
-
-    Returns:
-        The first-party factory classes defined in the GP component and preset modules.
-    """
-    from baybe.surrogates.gaussian_process.components import (
-        fit_criterion,
-        generic,
-        kernel,
-        likelihood,
-        mean,
-    )
-    from baybe.surrogates.gaussian_process.presets import (
-        baybe,
-        botorch,
-        chen,
-        edbo,
-        edbo_smoothed,
-        hvarfner,
-    )
-
-    modules = (
-        fit_criterion,
-        generic,
-        kernel,
-        likelihood,
-        mean,
-        baybe,
-        botorch,
-        chen,
-        edbo,
-        edbo_smoothed,
-        hvarfner,
-    )
-    return frozenset(
-        value
-        for module in modules
-        for value in vars(module).values()
-        if isinstance(value, type) and value.__module__ == module.__name__
-    )
-
-
-_LAYOUT_COMPATIBLE_FACTORY_TYPES = _collect_layout_factory_types()
-
-
-def _collect_layout_kernel_types() -> frozenset[type]:
-    """Collect the exact classes of the first-party BayBE kernel components.
-
-    Returns:
-        The first-party kernel classes defined in the basic and composite modules.
-    """
-    from baybe.kernels import basic, composite
-
-    modules = (basic, composite)
-    return frozenset(
-        value
-        for module in modules
-        for value in vars(module).values()
-        if isinstance(value, type) and value.__module__ == module.__name__
-    )
-
-
-_LAYOUT_COMPATIBLE_KERNEL_TYPES = _collect_layout_kernel_types()
-
-
-def _is_layout_compatible_kernel_component(component: object, /) -> bool:
-    """Tell if a fixed kernel component is verified for a product-free layout.
-
-    Fixed GPyTorch components are bound to resolved computational indices and never
-    receive the layout context, so they are always compatible. BayBE kernels are
-    trusted only with an exact first-party class, and composite kernels are checked
-    recursively. This rejects external subclasses and external leaves nested inside
-    a first-party composite before any conversion call.
-
-    Args:
-        component: The fixed kernel component or composite member.
-
-    Returns:
-        ``True`` if the component can be converted with a product-free layout.
-    """
-    if not isinstance(component, Kernel):
-        return True
-
-    if type(component) not in _LAYOUT_COMPATIBLE_KERNEL_TYPES:
-        return False
-
-    from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
-
-    if type(component) is ScaleKernel:
-        return _is_layout_compatible_kernel_component(component.base_kernel)
-    if type(component) in (AdditiveKernel, ProductKernel):
-        return all(
-            _is_layout_compatible_kernel_component(kernel)
-            for kernel in component.base_kernels
-        )
-    return True
-
-
-def _is_layout_compatible_factory(factory: object, /) -> bool:
-    """Tell if a component factory has verified product-free layout compatibility.
-
-    Fixed-component factories ignore the context entirely. Meta kernel factories are
-    compatible when all their members are. Only exact first-party factory classes are
-    trusted; subclasses and look-alike callables are external and must be rejected
-    before fitting. A fixed plain factory is only trusted when its kernel component
-    is itself verified, recursively.
-
-    Args:
-        factory: The component factory to classify.
-
-    Returns:
-        ``True`` if the factory can operate on a product-free input layout.
-    """
-    if type(factory) is ICMKernelFactory:
-        return _is_layout_compatible_factory(
-            factory.base_kernel_factory
-        ) and _is_layout_compatible_factory(factory.task_kernel_factory)
-    if type(factory) is PlainGPComponentFactory:
-        return _is_layout_compatible_kernel_component(factory.component)
-    return type(factory) in _LAYOUT_COMPATIBLE_FACTORY_TYPES
-
-
 def _validate_layout_surrogate(surrogate: object, context: _FitInputContext, /) -> None:
-    """Reject layouts and component configurations without verified compatibility.
+    """Reject non-Gaussian-process surrogates on a product-free layout.
 
     Args:
         surrogate: The configured or retained surrogate instance.
         context: The actual fit context.
 
     Raises:
-        IncompatibilityError: If the surrogate is not the built-in Gaussian process
-            surrogate or a configured factory/override is not proven to operate on
-            a product-free input layout.
+        IncompatibilityError: If a layout context receives a surrogate that is not a
+            :class:`~baybe.surrogates.gaussian_process.core.GaussianProcessSurrogate`.
     """
     if not isinstance(context, _ConfigurationSpace):
         return
     if not isinstance(surrogate, GaussianProcessSurrogate):
         raise IncompatibilityError(
-            f"Surrogate '{type(surrogate).__name__}' is not verified to operate on "
-            "the product-free input layout. Use the built-in Gaussian process "
-            "surrogate or the real search-space fit path."
+            f"Surrogate '{type(surrogate).__name__}' is not supported on the "
+            "product-free input layout. Use a GaussianProcessSurrogate or the real "
+            "search-space fit path."
         )
-
-    for name in (
-        "kernel_factory",
-        "mean_factory",
-        "likelihood_factory",
-        "fit_criterion_factory",
-    ):
-        factory = getattr(surrogate, name)
-        if factory is not None and not _is_layout_compatible_factory(factory):
-            raise IncompatibilityError(
-                f"The {name.replace('_', ' ')} "
-                f"'{type(factory).__name__}' is not verified to operate on the "
-                f"product-free input layout. Use a first-party factory or the "
-                f"real search-space fit path."
-            )
-
-    # Validate BayBE parameter overrides before their conversion receives the
-    # layout. Raw GPyTorch overrides are bound to resolved indices and need no
-    # layout context, so they remain accepted.
-    for parameter in context.parameters:
-        override = getattr(parameter, "_override_kernel", None)
-        if override is None or not isinstance(override, Kernel):
-            continue
-        if not _is_layout_compatible_kernel_component(override):
-            raise IncompatibilityError(
-                f"The kernel override of parameter '{parameter.name}' "
-                f"'{type(override).__name__}' is not verified to operate on the "
-                f"product-free input layout. Use a first-party kernel or the real "
-                f"search-space fit path."
-            )
 
 
 def _fit_gaussian_process_on_layout(
