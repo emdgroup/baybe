@@ -1086,7 +1086,9 @@ class _MultiStepModelBase(_ModelBase):
         """
         return {
             column: index
-            for index, column in enumerate(self.dag.full_searchspace.comp_rep_columns)
+            for index, column in enumerate(
+                self.dag._configuration_space.comp_rep_columns
+            )
         }
 
     def _validate_fitted(self) -> None:
@@ -2541,7 +2543,7 @@ class _MultiStepModelBase(_ModelBase):
                 f"but received a tensor with {X.dim()} dimension(s)."
             )
 
-        n_input = len(self.dag.full_searchspace.comp_rep_columns)
+        n_input = len(self.dag._configuration_space.comp_rep_columns)
         if X.shape[-1] != n_input:
             raise IncompatibilityError(
                 f"Expected candidate configurations with {n_input} comp-rep "

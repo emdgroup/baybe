@@ -28,6 +28,7 @@ from .node import MultiStepNode
 if TYPE_CHECKING:
     from baybe.parameters.base import Parameter
 
+    from ._configuration_space import _ConfigurationSpace
     from .model import MultiStepModel
 
 
@@ -410,6 +411,13 @@ class MultiStepDAG(SerialMixin):
         return SearchSpace.from_product(
             [parameter for node in self.nodes for parameter in node.inputs]
         )
+
+    @cached_property
+    def _configuration_space(self) -> _ConfigurationSpace:
+        """Return a factorized layout for all node-owned parameters."""
+        from ._configuration_space import _ConfigurationSpace
+
+        return _ConfigurationSpace.from_dag(self)
 
     def make_model(self) -> MultiStepModel:
         """Build an unfitted multi-step model for this DAG.
