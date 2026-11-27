@@ -96,11 +96,15 @@ model (LLM) for recommendations, adding knowledge a surrogate model cannot encod
 It is not Bayesian: no surrogate model, no uncertainty estimate.
 
 The recommender is available via the ``llm`` extra and sends requests through
-[LiteLLM](https://docs.litellm.ai); ``model`` is a provider-prefixed identifier (see
-the [provider list](https://docs.litellm.ai/docs/providers)). Credentials are best
-provided via the environment variables LiteLLM expects (e.g. ``OPENAI_API_KEY``).
-Additional arguments such as ``temperature`` go into ``litellm_args``, which are
-never serialized; the keys ``model``, ``messages`` and ``stream`` are rejected.
+[LiteLLM](https://docs.litellm.ai). The
+{attr}`~baybe.recommenders.pure.llm.llm.LLMRecommender.model` is a provider-prefixed
+identifier (see the [provider list](https://docs.litellm.ai/docs/providers)).
+Credentials are best provided via the environment variables LiteLLM expects (e.g.
+``OPENAI_API_KEY``). Additional arguments such as ``temperature`` go into the
+{attr}`~baybe.recommenders.pure.llm.llm.LLMRecommender.litellm_args`, which may
+contain credentials and are therefore never serialized: provide them again after
+loading a serialized recommender. The keys ``model``, ``messages`` and ``stream`` are
+rejected.
 
 ```python
 from baybe.recommenders import LLMRecommender
@@ -112,35 +116,30 @@ recommender = LLMRecommender(
 )
 ```
 
-The recommender is used like any other, e.g. inside a
-{class}`~baybe.campaign.Campaign`. Constructing it does not contact the model; only
-requesting recommendations does. Recommendations without a matching stored discrete
-configuration remain untracked by the campaign.
-
-The prompt contains the ``experiment_description``, the serialized objective,
-parameters and constraints, the metadata of parameters, targets and the objective,
-example configurations, the measurements and the pending experiments. Without
-objective metadata, a ``UserWarning`` is raised.
+Use the {attr}`~baybe.recommenders.pure.llm.llm.LLMRecommender.experiment_description`
+and the {ref}`metadata <parameter_metadata>` of parameters, targets and the objective
+to guide the model. For how to request recommendations, see
+[Getting Recommendations](/concepts/getting_recommendations).
 
 ```{admonition} Data Privacy
 :class: warning
-This information, including measurements and free-text descriptions, is sent to the
-configured provider. Check that it complies with your data-handling policies.
+Recommendation requests send the experiment description, the optimization problem
+and the available measurements to the configured provider. Check that this complies
+with your data-handling policies.
 ```
 
-A response must contain exactly the requested number of distinct recommendations
-inside the search space. An unusable response triggers one recovery attempt; if that
-fails too, {class}`~baybe.exceptions.LLMRecoveryFailedError` is raised. Call errors
-are not retried: {class}`~baybe.exceptions.LLMAuthenticationError` if the provider
-rejects authentication, {class}`~baybe.exceptions.LLMCallError` otherwise.
+If a response cannot be turned into valid recommendations, one recovery attempt is
+made with a corrective prompt; if that fails too,
+{class}`~baybe.exceptions.LLMRecoveryFailedError` is raised. Call errors are not
+retried: {class}`~baybe.exceptions.LLMAuthenticationError` if the provider rejects
+authentication, {class}`~baybe.exceptions.LLMCallError` otherwise.
 
 ```{admonition} Limitations
 :class: warning
-Components defined by arbitrary Python callables cannot be described to the model,
-which raises an {class}`~baybe.exceptions.IncompatibilityError` (e.g.
-{class}`~baybe.transformations.basic.CustomTransformation` or
-{class}`~baybe.constraints.discrete.DiscreteCustomConstraint`). Continuous constraints
-cannot be validated; an {class}`~baybe.exceptions.LLMResponseWarning` is raised.
+Components whose behavior is defined by arbitrary Python callables cannot be
+described to the model, which raises an
+{class}`~baybe.exceptions.IncompatibilityError`. Constraints on continuous
+parameters cannot be validated.
 ```
 
 ## Meta Recommenders
@@ -173,7 +172,8 @@ recommender = TwoPhaseMetaRecommender(
   the LLM proposes the first experiments, and the meta recommender switches to
   ``recommender`` (default:
   {class}`~baybe.recommenders.pure.bayesian.botorch.core.BotorchRecommender`) once
-  ``switch_after`` measurements are available.
+  {attr}`~baybe.recommenders.meta.sequential.TwoPhaseMetaRecommender.switch_after`
+  measurements are available.
 
 ```python
 from baybe.recommenders import TwoPhaseMetaRecommender
