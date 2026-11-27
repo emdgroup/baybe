@@ -61,7 +61,7 @@ from ._columns import (
     FEASIBILITY_LABEL,
     MEASUREMENT_ID,
 )
-from ._layout import _FactorizedInputLayout
+from ._configuration_space import _ConfigurationSpace
 from ._layout_fit import (
     _fit_layout_surrogate,
     _FitInputContext,
@@ -296,7 +296,7 @@ def _make_feasibility_searchspace(
         )
     parameters = [*base.parameters, *probability_parameters]
     context: _FitInputContext = (
-        _FactorizedInputLayout.from_parameters(parameters)
+        _ConfigurationSpace.from_parameters(parameters)
         if dag.product_free
         else SearchSpace.from_product(parameters)
     )
@@ -893,10 +893,10 @@ def _make_local_surrogate(
     """
     objective = target.to_objective()
     surrogate = deepcopy(node.surrogate_model if template is None else template)
-    if isinstance(fit_context, _FactorizedInputLayout):
+    if isinstance(fit_context, _ConfigurationSpace):
         _ensure_layout_local_surrogate(node, surrogate, label)
     if len(measurements) >= 2:
-        if fit_context is not None and isinstance(fit_context, _FactorizedInputLayout):
+        if fit_context is not None and isinstance(fit_context, _ConfigurationSpace):
             _fit_layout_surrogate(surrogate, fit_context, objective, measurements)
         else:
             surrogate.fit(cast(SearchSpace, fit_context), objective, measurements)
@@ -909,7 +909,7 @@ def _make_local_surrogate(
             f"{len(measurements)} usable measurement(s)."
         )
 
-    if isinstance(fit_context, _FactorizedInputLayout):
+    if isinstance(fit_context, _ConfigurationSpace):
         _validate_layout_surrogate(surrogate, fit_context)
 
     try:
@@ -1551,7 +1551,7 @@ class _MultiStepModelBase(_ModelBase):
         # every piece of state from the new data anyway.
         template = self._feasibility_models.get(node.name, _MultiStepGPClassifier())
         classifier = evolve(template)
-        if isinstance(feature_searchspace, _FactorizedInputLayout):
+        if isinstance(feature_searchspace, _ConfigurationSpace):
             _fit_layout_surrogate(
                 classifier, feature_searchspace, target.to_objective(), classifier_frame
             )

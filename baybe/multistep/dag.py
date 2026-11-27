@@ -23,7 +23,6 @@ from baybe.targets.base import Target
 from baybe.utils.basic import refers_to, to_tuple
 
 from ._columns import RESERVED_COLUMNS
-from ._layout import _FactorizedInputLayout
 from .context import MultiStepContext
 from .node import MultiStepNode
 
@@ -237,9 +236,13 @@ class MultiStepDAG(SerialMixin):
             )
 
         if self.product_free:
+            from ._configuration_space import _ConfigurationSpace
+
             # Validates names, active levels, and encodings parameter-wise
             # without constructing any parameter product.
-            _ = self._factorized_layout
+            _ConfigurationSpace.from_parameters(
+                [parameter for node in self.nodes for parameter in node.inputs]
+            )
         else:
             for node in self.nodes:
                 self._validate_node_searchspace(node)
@@ -321,18 +324,11 @@ class MultiStepDAG(SerialMixin):
             )
         )
 
-    @cached_property
-    def _factorized_layout(self) -> _FactorizedInputLayout:
-        """The product-free layout of all node-owned parameters."""
-        return _FactorizedInputLayout.from_parameters(
-            [parameter for node in self.nodes for parameter in node.inputs]
-        )
-
     @property
     def comp_rep_columns(self) -> tuple[str, ...]:
         """The DAG-wide computational-representation columns."""
         if self.product_free:
-            return self._factorized_layout.comp_rep_columns
+            return self._configuration_space.comp_rep_columns
         return self.full_searchspace.comp_rep_columns
 
     @property

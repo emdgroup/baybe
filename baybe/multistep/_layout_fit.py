@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 import warnings
 from collections.abc import Collection
-from typing import TYPE_CHECKING, TypeAlias, cast
+from typing import TypeAlias, cast
 
 import pandas as pd
 from attrs import define, field
@@ -37,26 +37,10 @@ from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.boolean import strtobool
 from baybe.utils.dataframe import handle_missing_values, to_tensor
 
-from ._layout import _FactorizedInputLayout
+from ._configuration_space import _ConfigurationSpace, _DiscreteParameterView
 
-if TYPE_CHECKING:
-    from baybe.parameters.base import Parameter
-
-_FitInputContext: TypeAlias = SearchSpace | _FactorizedInputLayout
+_FitInputContext: TypeAlias = SearchSpace | _ConfigurationSpace
 """The fit context of a surrogate: a real search space or a product-free layout."""
-
-
-@define(frozen=True, slots=False)
-class _LayoutDiscreteParameterView:
-    """Read-only parameter view used by factories that inspect discrete inputs.
-
-    This is deliberately not a :class:`~baybe.searchspace.discrete.SubspaceDiscrete`:
-    it exposes the parameter definitions already owned by the layout and never a
-    candidate table or product.
-    """
-
-    parameters: tuple[Parameter, ...] = field(converter=tuple)
-    """The discrete parameter definitions of the underlying layout."""
 
 
 @define(frozen=True, slots=False)
@@ -69,15 +53,13 @@ class _LayoutSearchSpaceView:
     table, or parameter product is constructed.
     """
 
-    layout: _FactorizedInputLayout = field(
-        validator=instance_of(_FactorizedInputLayout)
-    )
+    layout: _ConfigurationSpace = field(validator=instance_of(_ConfigurationSpace))
     """The actual product-free input layout."""
 
     @property
-    def discrete(self) -> _LayoutDiscreteParameterView:
+    def discrete(self) -> _DiscreteParameterView:
         """The discrete-parameter view of the underlying layout."""
-        return _LayoutDiscreteParameterView(self.layout._discrete_parameters)
+        return self.layout.discrete
 
     def _drop_parameters(self, names: Collection[str], /) -> _LayoutSearchSpaceView:
         """Return a view over the layout with the named parameters removed.
@@ -116,7 +98,7 @@ class _LayoutModelContext:
     @classmethod
     def from_layout(
         cls,
-        layout: _FactorizedInputLayout,
+        layout: _ConfigurationSpace,
         objective: Objective,
         measurements: pd.DataFrame,
     ) -> _LayoutModelContext:
@@ -184,7 +166,7 @@ def _make_model_context(
     Returns:
         A layout-aware or regular model context, depending on the given context.
     """
-    if isinstance(context, _FactorizedInputLayout):
+    if isinstance(context, _ConfigurationSpace):
         return _LayoutModelContext.from_layout(context, objective, measurements)
 
     from baybe.surrogates.gaussian_process.core import _ModelContext
@@ -332,7 +314,7 @@ def _validate_layout_surrogate(surrogate: object, context: _FitInputContext, /) 
             surrogate or a configured factory/override is not proven to operate on
             a product-free input layout.
     """
-    if not isinstance(context, _FactorizedInputLayout):
+    if not isinstance(context, _ConfigurationSpace):
         return
     if not isinstance(surrogate, GaussianProcessSurrogate):
         raise IncompatibilityError(
@@ -374,7 +356,7 @@ def _validate_layout_surrogate(surrogate: object, context: _FitInputContext, /) 
 
 def _fit_gaussian_process_on_layout(
     surrogate: GaussianProcessSurrogate,
-    layout: _FactorizedInputLayout,
+    layout: _ConfigurationSpace,
     objective: Objective,
     measurements: pd.DataFrame,
     train_x,
@@ -452,7 +434,7 @@ def _fit_gaussian_process_on_layout(
 
 def _fit_layout_surrogate(
     surrogate: object,
-    layout: _FactorizedInputLayout,
+    layout: _ConfigurationSpace,
     objective: Objective,
     measurements: pd.DataFrame,
 ) -> None:

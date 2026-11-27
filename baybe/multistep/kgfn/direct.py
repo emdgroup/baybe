@@ -215,7 +215,7 @@ class DirectPartialKnowledgeGradientFN(AcquisitionFunction):
             )
 
         try:
-            layout = dag._factorized_layout
+            layout = dag._configuration_space
         except IncompatibilityError:
             raise
         unsupported = sorted(

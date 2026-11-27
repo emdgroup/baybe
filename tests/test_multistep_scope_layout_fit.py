@@ -72,12 +72,29 @@ def _forbid_product_builders(monkeypatch) -> None:
     monkeypatch.setattr(SubspaceContinuous, "from_product", forbidden)
 
 
-def test_layout_is_local_to_multistep() -> None:
-    """The layout module lives below ``baybe.multistep`` only."""
-    from baybe.multistep._layout import _FactorizedInputLayout
+def test_one_factorized_layout_module() -> None:
+    """Only the configuration layout survives; ``_layout.py`` is gone."""
+    import baybe.multistep
+    from baybe.multistep._configuration_space import _ConfigurationSpace
 
-    assert _FactorizedInputLayout.__module__ == "baybe.multistep._layout"
+    package = Path(baybe.multistep.__file__).parent
+    assert not (package / "_layout.py").exists()
     assert importlib.util.find_spec("baybe.searchspace._factorized") is None
+    assert _ConfigurationSpace.__module__ == "baybe.multistep._configuration_space"
+    for name in (
+        "from_parameters",
+        "from_dag",
+        "scaling_bounds",
+        "discrete",
+        "task_idx",
+        "n_tasks",
+        "active_levels",
+        "get_comp_rep_parameter_indices",
+        "get_parameters_by_name",
+        "_drop_parameters",
+        "transform",
+    ):
+        assert hasattr(_ConfigurationSpace, name)
 
 
 @pytest.mark.parametrize(
@@ -105,7 +122,7 @@ def test_edbo_preset_keeps_its_original_discrete_access() -> None:
 @pytest.mark.parametrize("preset", ["EDBO"])
 def test_edbo_layout_fit_matches_real_searchspace(preset, monkeypatch) -> None:
     """Layout fitting preserves the original EDBO prior, likelihood, and posterior."""
-    from baybe.multistep._layout import _FactorizedInputLayout
+    from baybe.multistep._configuration_space import _ConfigurationSpace
     from baybe.multistep._layout_fit import _fit_layout_surrogate
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
     from baybe.utils.dataframe import to_tensor
@@ -114,7 +131,7 @@ def test_edbo_layout_fit_matches_real_searchspace(preset, monkeypatch) -> None:
     frame = _make_frame()
     objective = NumericalTarget("y").to_objective()
     legacy_space = SearchSpace.from_product(parameters)
-    layout = _FactorizedInputLayout.from_parameters(parameters)
+    layout = _ConfigurationSpace.from_parameters(parameters)
 
     legacy = GaussianProcessSurrogate.from_preset(preset)
     free = GaussianProcessSurrogate.from_preset(preset)
@@ -148,7 +165,7 @@ def test_layout_fit_reuses_and_invalidates_its_cache() -> None:
     """The layout fit keeps the regular cache key and invalidates on new data."""
     from joblib.hashing import hash
 
-    from baybe.multistep._layout import _FactorizedInputLayout
+    from baybe.multistep._configuration_space import _ConfigurationSpace
     from baybe.multistep._layout_fit import _fit_layout_surrogate
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
     from baybe.utils.dataframe import to_tensor
@@ -156,7 +173,7 @@ def test_layout_fit_reuses_and_invalidates_its_cache() -> None:
     parameters = _make_parameters()
     frame = _make_frame()
     objective = NumericalTarget("y").to_objective()
-    layout = _FactorizedInputLayout.from_parameters(parameters)
+    layout = _ConfigurationSpace.from_parameters(parameters)
     surrogate = GaussianProcessSurrogate()
 
     _seed()
@@ -166,7 +183,7 @@ def test_layout_fit_reuses_and_invalidates_its_cache() -> None:
 
     # An equivalent layout, the same objective, and the same data are a cache hit.
     _fit_layout_surrogate(
-        surrogate, _FactorizedInputLayout.from_parameters(parameters), objective, frame
+        surrogate, _ConfigurationSpace.from_parameters(parameters), objective, frame
     )
     assert surrogate._model is fitted_model
 
@@ -191,7 +208,7 @@ def test_layout_fit_reuses_and_invalidates_its_cache() -> None:
 
 def test_external_factory_is_rejected_before_publication() -> None:
     """A factory without verified layout compatibility is rejected before fitting."""
-    from baybe.multistep._layout import _FactorizedInputLayout
+    from baybe.multistep._configuration_space import _ConfigurationSpace
     from baybe.multistep._layout_fit import _fit_layout_surrogate
     from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
     from baybe.surrogates.gaussian_process.presets.edbo import EDBOKernelFactory
@@ -202,7 +219,7 @@ def test_external_factory_is_rejected_before_publication() -> None:
     parameters = _make_parameters()
     frame = _make_frame()
     objective = NumericalTarget("y").to_objective()
-    layout = _FactorizedInputLayout.from_parameters(parameters)
+    layout = _ConfigurationSpace.from_parameters(parameters)
     surrogate = GaussianProcessSurrogate(kernel_or_factory=_ExternalKernelFactory())
 
     with pytest.raises(IncompatibilityError, match="not verified"):

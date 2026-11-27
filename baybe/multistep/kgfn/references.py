@@ -39,7 +39,7 @@ def _make_reference_points(
         raise IncompatibilityError(
             "The direct pKGFN policy requires a product-free DAG."
         )
-    layout = model.dag._factorized_layout
+    layout = model.dag._configuration_space
     reference = next(model.parameters())
     rng = np.random.Generator(
         np.random.PCG64(_derive_seed(profile.sampling_seed, "references"))

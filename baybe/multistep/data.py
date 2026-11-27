@@ -1956,12 +1956,12 @@ def _make_local_fit_context(
     Returns:
         The local input context covering own parameters and historical features.
     """
-    from baybe.multistep._layout import _FactorizedInputLayout
+    from baybe.multistep._configuration_space import _ConfigurationSpace
     from baybe.searchspace.core import SearchSpace
 
     parameters = _make_local_parameters(context, node, frame)
     if product_free:
-        return _FactorizedInputLayout.from_parameters(parameters)
+        return _ConfigurationSpace.from_parameters(parameters)
     return SearchSpace.from_product(parameters)
 
 

@@ -13,7 +13,7 @@ from pandas.testing import assert_frame_equal
 
 from baybe.exceptions import IncompatibilityError
 from baybe.multistep import MultiStepDAG, MultiStepNode
-from baybe.multistep._layout import _FactorizedInputLayout
+from baybe.multistep._configuration_space import _ConfigurationSpace
 from baybe.multistep._layout_fit import _fit_layout_surrogate
 from baybe.objectives.single import SingleTargetObjective
 from baybe.parameters.categorical import CategoricalParameter
@@ -138,7 +138,7 @@ def _spy_folds(monkeypatch, model_module) -> dict[str, list[int]]:
 def test_layout_matches_small_real_searchspace(mixed_parameters, mixed_rows):
     """The layout reproduces the real small search space exactly."""
     old = SearchSpace.from_product(mixed_parameters)
-    new = _FactorizedInputLayout.from_parameters(mixed_parameters)
+    new = _ConfigurationSpace.from_parameters(mixed_parameters)
     assert new.parameter_names == old.parameter_names
     assert new.comp_rep_columns == old.comp_rep_columns
     assert_frame_equal(new.scaling_bounds, old.scaling_bounds)
@@ -159,7 +159,7 @@ def test_layout_complete_columns_and_bounds_for_inactive_levels(encoding):
         encoding=encoding,
     )
     old = SearchSpace.from_product((parameter,))
-    new = _FactorizedInputLayout.from_parameters((parameter,))
+    new = _ConfigurationSpace.from_parameters((parameter,))
 
     assert new.comp_rep_columns == old.comp_rep_columns
     assert_frame_equal(new.scaling_bounds, old.scaling_bounds)
@@ -187,7 +187,7 @@ def test_product_free_dag_allows_parent_only_non_root_node():
         product_free=True,
     )
 
-    assert dag._factorized_layout.parameter_names == ("x0",)
+    assert dag._configuration_space.parameter_names == ("x0",)
     assert child._own_parameter_layout.comp_rep_columns == ()
     assert child._own_comp_rep_columns == ()
 
@@ -197,8 +197,8 @@ def test_product_free_dag_allows_inactive_levels_but_default_rejects():
     parameter = CategoricalParameter("c", values=("a", "b", "c"), active_values=("b",))
 
     dag = _make_single_node_dag((parameter,), product_free=True)
-    assert dag._factorized_layout.active_levels("c") == ("b",)
-    assert dag._factorized_layout.comp_rep_columns == ("c_a", "c_b", "c_c")
+    assert dag._configuration_space.active_levels("c") == ("b",)
+    assert dag._configuration_space.comp_rep_columns == ("c_a", "c_b", "c_c")
 
     with pytest.raises(IncompatibilityError, match="restricted discrete candidate set"):
         _make_single_node_dag((parameter,), product_free=False)
@@ -276,13 +276,13 @@ def test_product_free_dag_construction_never_builds_parameter_product(monkeypatc
 
     assert calls == []
     assert dag.product_free is True
-    assert dag._factorized_layout.parameter_names == tuple(
+    assert dag._configuration_space.parameter_names == tuple(
         parameter.name for parameter in parameters
     )
-    assert dag._factorized_layout.comp_rep_columns == tuple(
+    assert dag._configuration_space.comp_rep_columns == tuple(
         parameter.name for parameter in parameters
     )
-    assert dag._factorized_layout.n_tasks == 1
+    assert dag._configuration_space.n_tasks == 1
 
 
 _GP_PRESETS = [
@@ -307,7 +307,7 @@ def test_gp_layout_fit_matches_real_searchspace_preset(
     frame = mixed_rows.assign(y=_target_values())
     objective = NumericalTarget("y").to_objective()
     old = SearchSpace.from_product(mixed_parameters)
-    layout = _FactorizedInputLayout.from_parameters(mixed_parameters)
+    layout = _ConfigurationSpace.from_parameters(mixed_parameters)
 
     def make_surrogate():
         if preset is None:
@@ -355,7 +355,7 @@ def test_classifier_layout_prior_and_fit_match_real_searchspace(
         "ok", success_value=True, failure_value=False
     ).to_objective()
     old = SearchSpace.from_product(mixed_parameters)
-    layout = _FactorizedInputLayout.from_parameters(mixed_parameters)
+    layout = _ConfigurationSpace.from_parameters(mixed_parameters)
 
     legacy_prior, free_prior = _MultiStepGPClassifier(), _MultiStepGPClassifier()
     legacy_prior.initialize_prior(old, objective)
@@ -517,12 +517,12 @@ def test_product_free_model_fit_avoids_products_and_evaluates(monkeypatch):
 
     assert calls == []
     surrogate = model._node_surrogates["n"]["y"]
-    assert isinstance(surrogate._searchspace, _FactorizedInputLayout)
+    assert isinstance(surrogate._searchspace, _ConfigurationSpace)
     classifier = model._feasibility_models["n"]
-    assert isinstance(classifier._searchspace, _FactorizedInputLayout)
+    assert isinstance(classifier._searchspace, _ConfigurationSpace)
     assert model._feasibility_feature_names["n"] == {}
 
-    layout = _FactorizedInputLayout.from_parameters(_make_mixed_parameters())
+    layout = _ConfigurationSpace.from_parameters(_make_mixed_parameters())
     candidates = to_tensor(layout.transform(_make_mixed_rows())).unsqueeze(0)
 
     with torch.no_grad():
@@ -630,7 +630,7 @@ def test_product_free_cross_fitted_classifier_matches_legacy(mode_name, monkeypa
     assert actual_names == expected_names
     assert free_model._feasibility_models == {}
     assert actual._searchspace is not None
-    assert isinstance(actual._searchspace, _FactorizedInputLayout)
+    assert isinstance(actual._searchspace, _ConfigurationSpace)
 
     if mode is InfeasibleMeasurementMode.PREDICTED_MEAN:
         assert auxiliary_fits
@@ -811,7 +811,7 @@ def test_product_free_multi_output_oof_uses_each_local_output(monkeypatch):
 
     assert calls == []
     assert feature_names.keys() == {"a", "b"}
-    assert isinstance(classifier._searchspace, _FactorizedInputLayout)
+    assert isinstance(classifier._searchspace, _ConfigurationSpace)
     assert classifier._model is not None
     assert records
     assert {record["output"] for record in records} == {"a", "b"}
@@ -920,7 +920,7 @@ def test_local_prior_layout_matches_real_searchspace(
     frame = mixed_rows.assign(y=_target_values()).iloc[:n_observations]
     target = NumericalTarget("y")
     legacy_context = _make_local_searchspace(dag.context, node, frame)
-    layout = _FactorizedInputLayout.from_parameters(dag.context._parameters(node))
+    layout = _ConfigurationSpace.from_parameters(dag.context._parameters(node))
 
     _seed_deterministic_fit()
     legacy = _make_local_surrogate(node, legacy_context, target, frame, "y")
@@ -974,7 +974,7 @@ def test_product_free_public_fit_avoids_products_and_matches_oracle(
     parameters = _make_mixed_parameters()
     oracle, legacy_space, rows = _make_public_fit_oracle(parameters)
     free_dag = _make_single_node_dag(parameters, product_free=True)
-    layout = _FactorizedInputLayout.from_parameters(parameters)
+    layout = _ConfigurationSpace.from_parameters(parameters)
     provided = SearchSpace.from_product(parameters)
     model = MultiStepModel(dag=free_dag, num_network_samples=4, sampling_seed=7)
 
@@ -1133,4 +1133,4 @@ def test_product_free_campaign_predicted_mean_fit_avoids_products(monkeypatch):
     assert set(campaign.model._feasibility_models) == {"second"}
     for surrogates in campaign.model._node_surrogates.values():
         for surrogate in surrogates.values():
-            assert isinstance(surrogate._searchspace, _FactorizedInputLayout)
+            assert isinstance(surrogate._searchspace, _ConfigurationSpace)

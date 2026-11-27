@@ -11,12 +11,14 @@ from pandas.testing import assert_frame_equal
 from baybe.exceptions import IncompatibilityError
 from baybe.multistep import MultiStepDAG, MultiStepModel, MultiStepNode
 from baybe.multistep._configuration_space import _ConfigurationSpace
-from baybe.parameters.categorical import CategoricalParameter
+from baybe.parameters.categorical import CategoricalParameter, TaskParameter
+from baybe.parameters.enum import CategoricalEncoding
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
     _FixedNumericalContinuousParameter,
 )
+from baybe.searchspace.core import SearchSpace
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -36,6 +38,59 @@ def fixture_mixed_dag():
     return MultiStepDAG(
         nodes=(node,), objective=NumericalTarget("utility").to_objective()
     )
+
+
+def _make_fit_parameters() -> tuple:
+    """Mixed parameters covering categorical, numerical discrete, and continuous."""
+    return (
+        CategoricalParameter(
+            "category", ("a", "b", "c"), encoding=CategoricalEncoding.OHE
+        ),
+        NumericalDiscreteParameter("level", (0.0, 0.5, 1.0)),
+        NumericalContinuousParameter("amount", (0.0, 2.0)),
+    )
+
+
+def _make_fit_frame(*, extra: bool = False) -> pd.DataFrame:
+    """Experimental rows for the mixed fit-parameter set."""
+    frame = pd.DataFrame(
+        {
+            "category": ["a", "b", "c", "a"],
+            "level": [0.0, 0.5, 1.0, 0.0],
+            "amount": [0.1, 0.9, 1.5, 2.0],
+        }
+    )
+    return frame.assign(unrelated=[1, 2, 3, 4]) if extra else frame
+
+
+def test_fit_surface_matches_real_searchspace() -> None:
+    """The unified layout exposes the GP fit surface with the same values."""
+    parameters = _make_fit_parameters()
+    layout = _ConfigurationSpace.from_parameters(parameters)
+    space = SearchSpace.from_product(parameters)
+
+    assert layout.comp_rep_columns == space.comp_rep_columns
+    assert_frame_equal(layout.scaling_bounds, space.scaling_bounds)
+    assert layout.task_idx is None
+    assert layout.n_tasks == 1
+    assert layout.discrete.parameters == space.discrete.parameters
+
+    frame = _make_fit_frame(extra=True)
+    assert_frame_equal(
+        layout.transform(frame, allow_extra=True),
+        space.transform(frame, allow_extra=True),
+    )
+
+
+def test_fit_constructor_rejects_task_parameters_but_from_dag_does_not() -> None:
+    """The strict fit path rejects task parameters; the DAG path stays permissive."""
+    task = TaskParameter("task", values=("a", "b"))
+    with pytest.raises(IncompatibilityError, match="TaskParameter"):
+        _ConfigurationSpace.from_parameters((task,))
+
+    permissive = _ConfigurationSpace(parameters=(task,))
+    assert permissive.task_idx == 0
+    assert permissive.n_tasks == 2
 
 
 def test_configuration_space_matches_small_product(mixed_dag):

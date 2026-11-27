@@ -188,7 +188,7 @@ def test_reference_points_encode_active_discrete_levels():
             num_restarts=2,
         ),
     )
-    layout = dag._factorized_layout
+    layout = dag._configuration_space
     columns = layout.comp_rep_columns
     d_index = columns.index("d")
     c_indices = [index for index, name in enumerate(columns) if name.startswith("c_")]

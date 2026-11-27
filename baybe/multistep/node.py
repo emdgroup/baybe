@@ -35,7 +35,7 @@ from baybe.surrogates.gaussian_process.core import GaussianProcessSurrogate
 from baybe.utils.basic import to_tuple
 from baybe.utils.validation import finite_float
 
-from ._layout import _FactorizedInputLayout
+from ._configuration_space import _ConfigurationSpace
 
 
 def _normalize_output(
@@ -255,9 +255,9 @@ class MultiStepNode:
             raise IncompatibilityError(f"Node '{self.name}' cannot be its own parent.")
 
     @cached_property
-    def _own_parameter_layout(self) -> _FactorizedInputLayout:
+    def _own_parameter_layout(self) -> _ConfigurationSpace:
         """The product-free layout of the node's own input parameters."""
-        return _FactorizedInputLayout.from_parameters(self.inputs)
+        return _ConfigurationSpace.from_parameters(self.inputs)
 
     @property
     def _own_comp_rep_columns(self) -> tuple[str, ...]:
