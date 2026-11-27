@@ -382,7 +382,7 @@ def test_discrete_configuration_rejects_nonmember_without_reserving():
     node = MultiStepNode(
         name="only",
         output="utility",
-        inputs=(NumericalDiscreteParameter("choice", (0.0, 1.0)),),
+        inputs=(NumericalDiscreteParameter("choice", (0.0, 1.0), tolerance=0.1),),
     )
     dag = MultiStepDAG(
         nodes=(node,), objective=NumericalTarget("utility").to_objective()
@@ -390,7 +390,7 @@ def test_discrete_configuration_rejects_nonmember_without_reserving():
     campaign = MultiStepCampaign.from_dag(dag)
 
     with pytest.raises(IncompatibilityError, match="outside the allowed values"):
-        campaign.register_configuration({"choice": 0.5})
+        campaign.register_configuration({"choice": 0.05})
 
     assert campaign.data._experiment_counter == 0
     assert not campaign.data._contexts

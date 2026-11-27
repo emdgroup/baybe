@@ -145,7 +145,11 @@ class _ConfigurationSpace:
                     raise IncompatibilityError(
                         f"Numerical parameter '{parameter.name}' must be finite."
                     )
-            if not parameter.is_in_range(value):
+            if isinstance(parameter, NumericalDiscreteParameter):
+                is_valid = value in parameter.values
+            else:
+                is_valid = parameter.is_in_range(value)
+            if not is_valid:
                 raise IncompatibilityError(
                     f"Value {value!r} is outside the allowed values or bounds of "
                     f"parameter '{parameter.name}'."

@@ -346,6 +346,102 @@ def test_invalid_optimized_configuration_does_not_reserve_state(campaign, monkey
     assert campaign.data._experiment_counter == prior_counter
 
 
+def test_optimizer_discrete_value_must_be_an_exact_member(monkeypatch):
+    """Reject an optimizer value within tolerance but not in discrete setpoints."""
+    import baybe.multistep._configuration_acquisition as configuration_acquisition
+
+    node = MultiStepNode(
+        name="only",
+        output="utility",
+        inputs=(NumericalDiscreteParameter("choice", (0.0, 1.0), tolerance=0.1),),
+    )
+    dag = MultiStepDAG(
+        nodes=(node,), objective=NumericalTarget("utility").to_objective()
+    )
+    campaign = MultiStepCampaign.from_dag(dag)
+    registered = campaign.register_configuration({"choice": 0.0})
+    experiment_id = registered.iloc[0]["experiment_id"]
+    campaign.get_next_configuration_action(experiment_id)
+    campaign.add_measurements(
+        pd.DataFrame(
+            [
+                {
+                    "experiment_id": experiment_id,
+                    "node": "only",
+                    "choice": 0.0,
+                    "utility": 3.0,
+                }
+            ]
+        )
+    )
+    monkeypatch.setattr(campaign, "_fit_node_models", lambda: None)
+    monkeypatch.setattr(
+        configuration_acquisition,
+        "make_configuration_acquisition",
+        lambda *args, **kwargs: object(),
+    )
+    monkeypatch.setattr(
+        configuration_acquisition,
+        "optimize_configuration",
+        lambda *args, **kwargs: pd.DataFrame({"choice": [0.05]}),
+    )
+    prior_contexts = dict(campaign.data._contexts)
+    prior_counter = campaign.data._experiment_counter
+
+    with pytest.raises(IncompatibilityError, match="outside the allowed values"):
+        campaign.recommend_configuration(sampling_seed=73)
+
+    assert campaign.data._contexts == prior_contexts
+    assert campaign.data._experiment_counter == prior_counter
+
+
+def test_configuration_optimizer_rejects_nearby_discrete_setpoint(monkeypatch):
+    """Reject a bounded optimizer candidate that is not an exact setpoint."""
+    import importlib
+
+    import torch
+    from botorch.optim import optimize_acqf_mixed_alternating as installed_optimizer
+
+    import baybe.multistep._configuration_acquisition as configuration_acquisition
+
+    node = MultiStepNode(
+        name="only",
+        output="utility",
+        inputs=(NumericalDiscreteParameter("choice", (0.0, 1.0), tolerance=0.1),),
+    )
+    dag = MultiStepDAG(
+        nodes=(node,), objective=NumericalTarget("utility").to_objective()
+    )
+    model = SimpleNamespace(
+        dag=dag,
+        parameters=lambda: iter(
+            [torch.nn.Parameter(torch.tensor(0.0, dtype=torch.double))]
+        ),
+    )
+
+    def optimize_nearby(acq_function, bounds, discrete_dims, options, q,
+                        raw_samples, num_restarts, sequential):
+        """Return a finite in-bounds value between the allowed setpoints."""
+        return torch.tensor([[0.05]], dtype=bounds.dtype, device=bounds.device), None
+
+    optimize_nearby.__doc__ = installed_optimizer.__doc__
+    monkeypatch.setattr(
+        importlib.import_module("botorch.optim"),
+        "optimize_acqf_mixed_alternating",
+        optimize_nearby,
+    )
+    monkeypatch.setattr(
+        configuration_acquisition,
+        "_validate_optimizer_api",
+        lambda **kwargs: None,
+    )
+
+    with pytest.raises(IncompatibilityError, match="outside the allowed values"):
+        configuration_acquisition.optimize_configuration(
+            model, object(), sampling_seed=79, num_restarts=1, raw_samples=1
+        )
+
+
 def test_configuration_ei_ignores_local_cost_and_risk_settings(campaign, monkeypatch):
     """Keep complete-configuration selection independent of local scoring policy."""
     import baybe.multistep._configuration_acquisition as configuration_acquisition
