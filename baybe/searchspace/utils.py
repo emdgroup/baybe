@@ -207,9 +207,7 @@ def _make_filtered_cartesian_product(
         optimize_parameter_order(parameters, constraints) if incremental else parameters
     )
     frames = [
-        nw.new_series(parameter.name, parameter.active_values, backend=backend)
-        .to_frame()
-        .lazy()
+        nw.from_dict({parameter.name: parameter.active_values}, backend=backend).lazy()
         for parameter in ordered_parameters
     ]
     if initial_df is not None:
