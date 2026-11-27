@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 
 ### Added
+- Fixed-configuration multi-step workflows with factorized sampling, qEI/qLogEI
+  recommendations over complete successful process references, and sequential
+  execution through an evaluator callback
 - Select the multi-step acquisition scoring cost with `MultiStepCampaign.cost_mode`
   (`"node"` or `"remaining"`); the default remains `"remaining"`
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
