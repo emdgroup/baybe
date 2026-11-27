@@ -786,6 +786,109 @@ class MultiStepCampaign(SerialMixin):
         )
         return self.register_configuration(configuration.iloc[0].to_dict())
 
+    def recommend_configuration(
+        self,
+        *,
+        acquisition_function: AcquisitionFunction | str = "qLogEI",
+        sampling_seed: int,
+        n_mc_samples: int = 512,
+        num_restarts: int = 20,
+        raw_samples: int = 1024,
+    ) -> pd.DataFrame:
+        """Fit the network and reserve one complete configuration by ordinary EI.
+
+        EI uses the maximum objective-transformed network posterior mean among real,
+        complete, successful process measurements. The method acquisition is
+        independent of the campaign's local-node acquisition and scoring settings.
+
+        Args:
+            acquisition_function: BayBE qEI/qLogEI instance or registered name.
+                Defaults to qLogEI.
+            sampling_seed: Non-negative genuine integer seed. Separate child seeds
+                drive acquisition samples and optimizer randomness.
+            n_mc_samples: Positive number of posterior samples for EI.
+            num_restarts: Positive number of optimizer restarts.
+            raw_samples: Number of optimizer raw starts, at least ``num_restarts``.
+
+        Returns:
+            A one-row dataframe with ``experiment_id`` and every owned parameter
+            in DAG declaration order.
+
+        Raises:
+            IncompatibilityError: If prerequisites, complete references, or the
+                optimized configuration are invalid.
+            IncompatibleAcquisitionFunctionError: If the acquisition or installed
+                BoTorch APIs are unsupported.
+            TypeError: If a seed or count is not a genuine integer.
+            ValueError: If a seed/count is out of range or raw samples are fewer
+                than restarts.
+        """
+        from ._configuration_acquisition import (
+            make_configuration_acquisition,
+            optimize_configuration,
+            validate_configuration_optimization_api,
+        )
+
+        for name, value, minimum in (
+            ("sampling_seed", sampling_seed, 0),
+            ("n_mc_samples", n_mc_samples, 1),
+            ("num_restarts", num_restarts, 1),
+            ("raw_samples", raw_samples, 1),
+        ):
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise TypeError(f"{name} must be an integer.")
+            if value < minimum:
+                raise ValueError(f"{name} must be at least {minimum}.")
+        if raw_samples < num_restarts:
+            raise ValueError("raw_samples must be at least num_restarts.")
+
+        self._validate_configuration_prerequisites()
+        if self._has_open_process_context() or self._has_open_configuration():
+            raise IncompatibilityError(
+                "A new complete configuration cannot be recommended while another "
+                "process context is open."
+            )
+        configuration_space = self.dag._configuration_space
+        configuration_space.validate_numerical_parameters()
+        resolved_acquisition = validate_configuration_optimization_api(
+            acquisition_function,
+            has_discrete_parameters=bool(configuration_space.discrete_dims),
+        )
+        self.data.validate(
+            self.dag, numerical_measurements_must_be_within_tolerance=False
+        )
+        references = self.data.complete_measurement_frame(
+            self.dag, execution_mode="process"
+        )
+        if references.empty:
+            raise IncompatibilityError(
+                "Configuration EI requires at least one complete successful process "
+                "reference."
+            )
+
+        seeds = np.random.SeedSequence(sampling_seed).spawn(2)
+        mc_seed, optimizer_seed = (
+            int(seed.generate_state(1, dtype="uint32")[0]) for seed in seeds
+        )
+        self._fit_node_models()
+        acquisition = make_configuration_acquisition(
+            self.model,
+            references,
+            resolved_acquisition,
+            sampling_seed=mc_seed,
+            n_mc_samples=n_mc_samples,
+        )
+        candidate = optimize_configuration(
+            self.model,
+            acquisition,
+            sampling_seed=optimizer_seed,
+            num_restarts=num_restarts,
+            raw_samples=raw_samples,
+        )
+        configuration = candidate.iloc[0].to_dict()
+        configuration_space.validate(configuration)
+        return self.register_configuration(configuration)
+
     def get_next_configuration_action(self, experiment_id: str) -> pd.DataFrame:
         """Reserve or return the first executable action for a fixed configuration.
 
