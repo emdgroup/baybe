@@ -9,7 +9,10 @@ from baybe import multistep
 from baybe.exceptions import IncompatibilityError
 from baybe.multistep import MultiStepCampaign, MultiStepDAG, MultiStepNode
 from baybe.multistep.node import FeasibilityCondition
-from baybe.parameters.numerical import NumericalContinuousParameter
+from baybe.parameters.numerical import (
+    NumericalContinuousParameter,
+    NumericalDiscreteParameter,
+)
 from baybe.targets.numerical import NumericalTarget
 
 
@@ -85,6 +88,52 @@ def test_full_execution_never_recommends_or_fits(campaign, monkeypatch):
         2.0,
         4.0,
     ]
+
+
+def test_evaluator_own_parameter_accepts_measurement_tolerance():
+    """Accept an evaluator's measured setpoint within the parameter tolerance."""
+    node = MultiStepNode(
+        name="only",
+        output="utility",
+        inputs=(NumericalDiscreteParameter("choice", (0.0, 1.0), tolerance=0.1),),
+    )
+    dag = MultiStepDAG(
+        nodes=(node,), objective=NumericalTarget("utility").to_objective()
+    )
+    campaign = MultiStepCampaign.from_dag(dag)
+    experiment_id = campaign.register_configuration({"choice": 0.0}).loc[
+        0, "experiment_id"
+    ]
+
+    def evaluator(action):
+        return _make_result(action.assign(choice=0.05), utility=2.0)
+
+    _evaluate_configuration(campaign, experiment_id, evaluator)
+
+    measurements = campaign.data.measurements_of_experiment(experiment_id)
+    assert len(measurements) == 1
+    assert measurements[0].inputs["choice"] == 0.05
+    assert campaign.data._contexts[experiment_id].pending == {}
+
+
+def test_evaluator_requires_exact_parent_history(campaign):
+    """Keep real parent outputs exact when matching evaluator action history."""
+    experiment_id = campaign.register_configuration({"x": 0.25, "z": 0.75}).loc[
+        0, "experiment_id"
+    ]
+
+    def evaluator(action):
+        if action.loc[0, "node"] == "root":
+            return _make_result(action, root_output=2.0)
+        return _make_result(action.assign(root_output=2.01), utility=4.0)
+
+    with pytest.raises(
+        IncompatibilityError, match="does not match its reserved action"
+    ):
+        _evaluate_configuration(campaign, experiment_id, evaluator)
+
+    assert [measurement.node for measurement in campaign.data.measurements] == ["root"]
+    assert set(campaign.data._contexts[experiment_id].pending) == {"child"}
 
 
 def test_failure_stops_after_real_failure_measurement(campaign):

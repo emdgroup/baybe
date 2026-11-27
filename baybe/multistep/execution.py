@@ -73,10 +73,13 @@ def evaluate_configuration(
 
         expected = action.iloc[0].to_dict()
         node = campaign.dag.node_by_name[str(expected[NODE])]
+        from baybe.multistep.campaign import _values_match as _parameter_values_match
+
+        parameters = {parameter.name: parameter for parameter in node.inputs}
         required_columns = {
             EXPERIMENT_ID,
             NODE,
-            *(parameter.name for parameter in node.inputs),
+            *parameters,
         }
         missing = sorted(required_columns - set(response.columns))
         if missing:
@@ -87,7 +90,12 @@ def evaluate_configuration(
         mismatched = [
             column
             for column, value in expected.items()
-            if column in response.columns and not _values_match(value, actual[column])
+            if column in response.columns
+            and not (
+                _parameter_values_match(parameters[column], actual[column], value)
+                if column in parameters
+                else _values_match(value, actual[column])
+            )
         ]
         if mismatched:
             raise IncompatibilityError(
