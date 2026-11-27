@@ -419,7 +419,12 @@ def _make_override_parameters(mode: TransferLearningMode | None = None) -> list:
     ]
     if mode is not None:
         parameters.append(
-            TaskParameter("task", ["a", "b"], override_transfer_learning_mode=mode)
+            TaskParameter(
+                "task",
+                ["a", "b"],
+                active_values=["a"],
+                override_transfer_learning_mode=mode,
+            )
         )
     return parameters
 
@@ -437,6 +442,12 @@ def _make_override_parameters(mode: TransferLearningMode | None = None) -> list:
 )
 def test_kernel_override_iteration(ongoing_campaign, n_iterations, batch_size):
     """A full optimization loop runs with kernel overrides."""
+    if "task" in ongoing_campaign.searchspace.parameter_names:
+        # RGPE needs source task data
+        source = create_fake_input(
+            ongoing_campaign.parameters, ongoing_campaign.targets, n_rows=1
+        )
+        ongoing_campaign.add_measurements(source.assign(task="b"))
     run_iterations(ongoing_campaign, n_iterations, batch_size)
 
 

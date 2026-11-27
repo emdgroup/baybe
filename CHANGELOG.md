@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constraint filtering
 
 ### Added
+- `TransferLearningMode.RGPE`, a rank-weighted Gaussian process ensemble for transfer
+  learning, selectable via `override_transfer_learning_mode="RGPE"` on a `TaskParameter`
+- `TransferLearningMode.NAIVE`, which pools all tasks into a single-task model
 - `simplex_coefficients` keyword argument to `SubspaceDiscrete.from_simplex` for
   weighted simplex sum constraints
 - `Symmetry` concept for expressing symmetries of the optimization problem, including

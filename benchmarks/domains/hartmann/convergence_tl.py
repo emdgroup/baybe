@@ -7,12 +7,14 @@ from collections.abc import Callable
 import numpy as np
 import pandas as pd
 import torch
+from attrs import evolve
 from botorch.test_functions.synthetic import Hartmann
 
 from baybe.campaign import Campaign
 from baybe.objectives import SingleTargetObjective
 from baybe.parameters import NumericalDiscreteParameter, TaskParameter
 from baybe.parameters.base import DiscreteParameter
+from baybe.parameters.enum import TransferLearningMode
 from baybe.searchspace import SearchSpace
 from baybe.settings import Settings
 from baybe.simulation import simulate_scenarios
@@ -105,10 +107,14 @@ def _make_hartmann_tl_benchmark(
             values=("Target_Function", "Source_Function"),
             active_values=("Target_Function",),
         )
-        params_tl = params + [task_param]
+        task_param_naive = evolve(
+            task_param, override_transfer_learning_mode=TransferLearningMode.NAIVE
+        )
 
-        searchspace_nontl = SearchSpace.from_product(parameters=params)
-        searchspace_tl = SearchSpace.from_product(parameters=params_tl)
+        searchspace_naive = SearchSpace.from_product(
+            parameters=params + [task_param_naive]
+        )
+        searchspace_tl = SearchSpace.from_product(parameters=params + [task_param])
 
         objective = SingleTargetObjective(
             target=NumericalTarget(name="Target", minimize=True)
@@ -117,8 +123,8 @@ def _make_hartmann_tl_benchmark(
             searchspace=searchspace_tl,
             objective=objective,
         )
-        nontl_campaign = Campaign(
-            searchspace=searchspace_nontl,
+        naive_campaign = Campaign(
+            searchspace=searchspace_naive,
             objective=objective,
         )
 
@@ -160,7 +166,7 @@ def _make_hartmann_tl_benchmark(
                 simulate_scenarios(
                     {
                         f"{int(100 * p)}": tl_campaign,
-                        f"{int(100 * p)}_naive": nontl_campaign,
+                        f"{int(100 * p)}_naive": naive_campaign,
                     },
                     lookup,
                     initial_data=initial_data_samples[p],
@@ -172,7 +178,7 @@ def _make_hartmann_tl_benchmark(
             )
         results.append(
             simulate_scenarios(
-                {"0": tl_campaign, "0_naive": nontl_campaign},
+                {"0": tl_campaign, "0_naive": naive_campaign},
                 lookup,
                 batch_size=settings.batch_size,
                 n_doe_iterations=settings.n_doe_iterations,

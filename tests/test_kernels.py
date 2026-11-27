@@ -11,7 +11,7 @@ from hypothesis import given
 from pytest import param
 
 from baybe.kernels.base import BasicKernel, Kernel
-from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel
+from baybe.kernels.basic import IndexKernel, MaternKernel, RBFKernel, _VanishingKernel
 from baybe.kernels.composite import AdditiveKernel, ProductKernel, ScaleKernel
 from baybe.parameters import (
     NumericalContinuousParameter,
@@ -67,6 +67,13 @@ def validate_gpytorch_kernel_components(  # noqa: DOC501
         mapped: The corresponding object in the translated GPyTorch kernel.
         searchspace: The search space used for the translation.
     """
+    # A composite with a single non-vanishing member translates to that member
+    if isinstance(obj, (AdditiveKernel, ProductKernel)):
+        surviving = [k for k in obj.base_kernels if not isinstance(k, _VanishingKernel)]
+        if len(surviving) == 1:
+            validate_gpytorch_kernel_components(surviving[0], mapped, searchspace)
+            return
+
     # Assert that the kernel kwargs are correctly mapped
     if isinstance(obj, BasicKernel):
         active_dims, ard_num_dims = obj._get_dimensions(searchspace)
@@ -130,9 +137,11 @@ def validate_gpytorch_kernel_components(  # noqa: DOC501
                 component, mapped_component, searchspace
             )
 
-        # Same for collections of BayBE objects (coming from composite kernels)
+        # Same for collections of BayBE objects (coming from composite kernels),
+        # ignoring vanishing members
         elif isinstance(component, tuple) and all(has(c) for c in component):
-            for c, m in zip(component, mapped_component):
+            surviving = [c for c in component if not isinstance(c, _VanishingKernel)]
+            for c, m in zip(surviving, mapped_component, strict=True):
                 validate_gpytorch_kernel_components(c, m, searchspace)
 
         # On the lowest component level, simply check for equality
@@ -148,7 +157,7 @@ def validate_gpytorch_kernel_components(  # noqa: DOC501
             )
 
 
-@given(kernels())
+@given(kernels().filter(lambda k: not isinstance(k, _VanishingKernel)))
 def test_kernel_assembly(kernel: Kernel):
     """Turning a BayBE kernel into a GPyTorch kernel raises no errors and all its
     components are translated correctly."""  # noqa
@@ -227,6 +236,42 @@ def test_mul_constant_produces_constant_scale_kernel(left, right, searchspace):
     optimizer = torch.optim.SGD(gpytorch_kernel.parameters(), lr=0.1)
     optimizer.step()
     assert gpytorch_kernel.outputscale.item() == initial_outputscale
+
+
+@pytest.mark.parametrize(
+    ("result", "expected"),
+    [
+        param(MaternKernel() * _VanishingKernel(), MaternKernel(), id="k*V"),
+        param(_VanishingKernel() + MaternKernel(), MaternKernel(), id="V+k"),
+        param(
+            MaternKernel() * _VanishingKernel() * RBFKernel(),
+            MaternKernel() * RBFKernel(),
+            id="chain",
+        ),
+        param(_VanishingKernel() * _VanishingKernel(), _VanishingKernel(), id="V*V"),
+        param(
+            _VanishingKernel(parameter_names=["a", "b"])
+            + _VanishingKernel(parameter_names=["b", "c"]),
+            _VanishingKernel(parameter_names=["a", "b", "c"]),
+            id="V+V-merged-scopes",
+        ),
+        param(
+            _VanishingKernel(parameter_names=["a"]) * _VanishingKernel(),
+            _VanishingKernel(),
+            id="V*V-unscoped",
+        ),
+        param(_VanishingKernel() * 1, _VanishingKernel(), id="V*1"),
+    ],
+)
+def test_vanishing_kernel_arithmetic(result, expected):
+    """Vanishing kernels drop out of kernel arithmetic."""
+    assert result == expected
+
+
+def test_vanishing_kernel_has_no_gpytorch_representation(searchspace):
+    """Converting a vanishing kernel to GPyTorch raises an error."""
+    with pytest.raises(TypeError, match="no GPyTorch representation"):
+        _VanishingKernel().to_gpytorch(searchspace)
 
 
 @pytest.fixture(name="task_searchspace")
@@ -331,6 +376,16 @@ def fixture_task_searchspace() -> SearchSpace:
                 MaternKernel(parameter_names=("x",)) * RBFKernel(parameter_names=("x",))
             ),
             id="nested_product_under_scale",
+        ),
+        param(
+            ProductKernel([MaternKernel(), _VanishingKernel()]),
+            MaternKernel(parameter_names=("x",)),
+            id="product_drops_vanishing_factor",
+        ),
+        param(
+            ProductKernel([RBFKernel(parameter_names=("Task",)), _VanishingKernel()]),
+            None,
+            id="product_with_only_vanishing_rest_collapses_to_none",
         ),
     ],
 )
