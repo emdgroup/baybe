@@ -671,7 +671,6 @@ class MultiStepCampaign(SerialMixin):
                 "Full-configuration attempts support only OBSERVED and EXCLUDE "
                 f"failure training modes; unsupported nodes: {unsupported_modes}."
             )
-        self.dag._configuration_space.validate_numerical_parameters()
 
     def _has_open_process_context(self) -> bool:
         """Return whether any known process context is incomplete and active."""

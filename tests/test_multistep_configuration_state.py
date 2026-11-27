@@ -12,6 +12,7 @@ from baybe.exceptions import IncompatibilityError
 from baybe.multistep import MultiStepCampaign, MultiStepDAG, MultiStepNode
 from baybe.multistep.data import MultiStepData
 from baybe.multistep.node import FeasibilityCondition
+from baybe.parameters.categorical import CategoricalParameter
 from baybe.parameters.numerical import (
     NumericalContinuousParameter,
     NumericalDiscreteParameter,
@@ -363,6 +364,30 @@ def test_discrete_configuration_rejects_nonmember_without_reserving():
 
     assert campaign.data._experiment_counter == 0
     assert not campaign.data._contexts
+
+
+def test_categorical_fixed_configuration_can_register_and_sample():
+    """Keep generic discrete state APIs broader than numeric EI optimization."""
+    node = MultiStepNode(
+        name="only",
+        output="utility",
+        inputs=(CategoricalParameter("kind", ("a", "b")),),
+    )
+    dag = MultiStepDAG(
+        nodes=(node,), objective=NumericalTarget("utility").to_objective()
+    )
+    campaign = MultiStepCampaign.from_dag(dag)
+    registration = campaign.register_configuration({"kind": "a"})
+    action = campaign.get_next_configuration_action(
+        registration.iloc[0]["experiment_id"]
+    )
+    sampled_campaign = MultiStepCampaign.from_dag(dag)
+
+    sampled = sampled_campaign.sample_configuration(sampling_seed=79)
+
+    assert registration.loc[0, "kind"] == "a"
+    assert action.loc[0, "kind"] == "a"
+    assert sampled.loc[0, "kind"] in ("a", "b")
 
 
 def test_unknown_feasibility_blocks_configuration_rollout():
