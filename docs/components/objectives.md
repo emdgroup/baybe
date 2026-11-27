@@ -238,10 +238,15 @@ assert mask.equals(pd.Series([False, True, False, True]))
 
 ## Metadata
 
-Objectives accept a ``metadata`` attribute of type
-{class}`~baybe.utils.metadata.Metadata` with ``description`` and ``misc``.
-Its description is the natural place to state the optimization goal in words. See the
-{ref}`parameter metadata <parameter_metadata>` section for the dictionary shortcut.
+Objectives accept an optional ``metadata`` attribute. It does not influence the
+optimization itself, but it is serialized with the objective and passed to the
+{ref}`LLM recommender <llm_recommender>` as additional context.
+
+The metadata is either a {class}`~baybe.utils.metadata.Metadata` object with the
+{attr}`~baybe.utils.metadata.Metadata.description` and
+{attr}`~baybe.utils.metadata.Metadata.misc` fields, or a dictionary whose
+``description`` key populates the dedicated field and whose remaining keys are
+collected in ``misc``:
 
 ```python
 from baybe.objectives import SingleTargetObjective

@@ -395,10 +395,16 @@ t7 = t6.normalize()  # normalize to [0, 1]
 
 ## Metadata
 
-Targets accept the same ``metadata`` attribute as parameters, a
-{class}`~baybe.utils.metadata.MeasurableMetadata` with ``description``, ``unit`` and
-``misc``. See the {ref}`parameter metadata <parameter_metadata>` section for the
-dictionary shortcut.
+Targets accept an optional ``metadata`` attribute. It does not influence the
+optimization itself, but it is serialized with the target and passed to the
+{ref}`LLM recommender <llm_recommender>` as additional context.
+
+The metadata is either a {class}`~baybe.utils.metadata.MeasurableMetadata` object
+with the {attr}`~baybe.utils.metadata.MeasurableMetadata.description`,
+{attr}`~baybe.utils.metadata.MeasurableMetadata.unit` and
+{attr}`~baybe.utils.metadata.MeasurableMetadata.misc` fields, or a dictionary whose
+``description`` and ``unit`` keys populate the dedicated fields and whose remaining
+keys are collected in ``misc``:
 
 ```python
 from baybe.targets import NumericalTarget
