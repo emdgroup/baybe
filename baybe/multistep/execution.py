@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from baybe.exceptions import IncompatibilityError
+from baybe.multistep._columns import EXPERIMENT_ID, NODE
 
 if TYPE_CHECKING:
     from baybe.multistep.campaign import MultiStepCampaign
@@ -71,16 +72,22 @@ def evaluate_configuration(
             )
 
         expected = action.iloc[0].to_dict()
-        missing = sorted(set(expected) - set(response.columns))
+        node = campaign.dag.node_by_name[str(expected[NODE])]
+        required_columns = {
+            EXPERIMENT_ID,
+            NODE,
+            *(parameter.name for parameter in node.inputs),
+        }
+        missing = sorted(required_columns - set(response.columns))
         if missing:
             raise IncompatibilityError(
-                f"The evaluator response is missing action identity columns {missing}."
+                f"The evaluator response is missing required action columns {missing}."
             )
         actual = response.iloc[0]
         mismatched = [
             column
             for column, value in expected.items()
-            if not _values_match(value, actual[column])
+            if column in response.columns and not _values_match(value, actual[column])
         ]
         if mismatched:
             raise IncompatibilityError(

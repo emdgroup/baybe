@@ -68,7 +68,7 @@ def test_full_execution_never_recommends_or_fits(campaign, monkeypatch):
         assert node == "child"
         assert action.loc[0, "z"] == 0.75
         assert action.loc[0, "root_output"] == 2.0
-        return _make_result(action, utility=4.0)
+        return _make_result(action.drop(columns=["root_output"]), utility=4.0)
 
     result = _evaluate_configuration(campaign, experiment_id, evaluator)
 
