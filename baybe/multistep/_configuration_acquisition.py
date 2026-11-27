@@ -231,7 +231,7 @@ def make_configuration_acquisition(
     configuration_space = dag._configuration_space
     required_columns = {
         *configuration_space.parameter_names,
-        *dag.objective.output_names,
+        *(target.name for target in dag.objective.targets),
     }
     missing = sorted(required_columns - set(references.columns))
     if missing:

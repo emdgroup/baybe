@@ -479,6 +479,86 @@ def test_qei_uses_model_mean_reference_and_objective_direction(
     assert sampler_calls == [(torch.Size([4]), 13)]
 
 
+def test_scalarized_qei_uses_target_columns_in_objective_order(monkeypatch):
+    """Build scalarized EI from real target columns and objective-ordered outputs."""
+    import importlib
+
+    import torch
+    from botorch.models.deterministic import GenericDeterministicModel
+    from botorch.sampling.base import MCSampler
+
+    from baybe.multistep._configuration_acquisition import (
+        make_configuration_acquisition,
+    )
+    from baybe.objectives.desirability import DesirabilityObjective
+
+    node_a = MultiStepNode(
+        name="a-node",
+        output="target-a",
+        inputs=(NumericalContinuousParameter("x", (0.0, 1.0)),),
+    )
+    node_b = MultiStepNode(
+        name="b-node",
+        output="target-b",
+        inputs=(NumericalContinuousParameter("y", (0.0, 1.0)),),
+    )
+    objective = DesirabilityObjective(
+        [
+            NumericalTarget("target-b", minimize=True),
+            NumericalTarget("target-a"),
+        ],
+        scalarizer="MEAN",
+        require_normalization=False,
+    )
+    dag = MultiStepDAG(nodes=(node_a, node_b), objective=objective)
+    adapter = GenericDeterministicModel(
+        lambda X: X.new_tensor([2.0, 4.0]).expand(X.shape[:-1] + (2,)),
+        num_outputs=2,
+    )
+    model = SimpleNamespace(
+        dag=dag,
+        parameters=lambda: iter(
+            [torch.nn.Parameter(torch.tensor(0.0, dtype=torch.double))]
+        ),
+    )
+    monkeypatch.setattr(
+        "baybe.multistep._configuration_acquisition._make_acquisition_model_adapter",
+        lambda _model: adapter,
+        raising=False,
+    )
+
+    class _FixedSampler(MCSampler):
+        def __init__(self):
+            super().__init__(sample_shape=torch.Size([2]), seed=17)
+
+        def forward(self, posterior):
+            """Return two known, objective-ordered samples for both targets."""
+            values = posterior.mean.new_tensor([[1.0, 5.0], [3.0, 7.0]])
+            return values.reshape(2, 1, 1, 2).expand((2, *posterior.mean.shape))
+
+    sampler_module = importlib.import_module("botorch.sampling.get_sampler")
+    monkeypatch.setattr(
+        sampler_module,
+        "get_sampler",
+        lambda posterior, sample_shape, *, seed=None: _FixedSampler(),
+    )
+    references = pd.DataFrame(
+        {"x": [0.25], "y": [0.75], "target-a": [99.0], "target-b": [-99.0]}
+    )
+
+    acquisition = make_configuration_acquisition(
+        model,
+        references,
+        "qEI",
+        sampling_seed=17,
+        n_mc_samples=2,
+    )
+
+    assert acquisition.best_f.item() == pytest.approx(1.5)
+    candidate = torch.tensor([[[0.5, 0.5]]], dtype=torch.double)
+    assert acquisition(candidate).item() == pytest.approx(1.0)
+
+
 def test_qlogei_matches_botorch_with_identical_model_and_samples(campaign, monkeypatch):
     """Preserve BoTorch's smoothed log-EI, not log of a plug-in qEI estimate."""
     import torch
